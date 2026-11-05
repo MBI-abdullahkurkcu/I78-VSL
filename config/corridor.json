@@ -1,0 +1,177 @@
+{
+  "name": "I-78 Western New Jersey (Warren / Hunterdon)",
+  "posted_speed_mph": 65,
+  "min_adverse_speed_mph": 35,
+  "min_dry_speed_mph": 45,
+  "lanes_per_direction": 2,
+  "study_limits_note": "Study section per the INRIX pull: I-78 from the PA-NJ state border (Delaware River, MP 0) to Charlestown Rd / Perryville Rd (Exit 12), about 13.5 miles per direction, Warren and Hunterdon counties. The crash extract currently covers only Greenwich Twp (Warren) and Bethlehem Twp (Hunterdon), about MP 3.7 to 10.4; Pohatcong Twp (MP 0 to 3.7) and Union Twp (MP 10.4 to 13) still need to be pulled.",
+  "centerline": [
+    [
+      40.67033,
+      -75.17643
+    ],
+    [
+      40.66779,
+      -75.13835
+    ],
+    [
+      40.67064,
+      -75.12923
+    ],
+    [
+      40.67106,
+      -75.10549
+    ],
+    [
+      40.66946,
+      -75.10084
+    ],
+    [
+      40.66613,
+      -75.09405
+    ],
+    [
+      40.66138,
+      -75.07841
+    ],
+    [
+      40.65991,
+      -75.07026
+    ],
+    [
+      40.65944,
+      -75.06752
+    ],
+    [
+      40.64468,
+      -75.00089
+    ],
+    [
+      40.64257,
+      -74.99356
+    ],
+    [
+      40.63512,
+      -74.97317
+    ],
+    [
+      40.63557,
+      -74.96444
+    ]
+  ],
+  "interchanges": [
+    {
+      "mp": 0.0,
+      "label": "PA-NJ state border / Delaware River (I-78 Toll Bridge)",
+      "lat": 40.67033,
+      "lon": -75.17643
+    },
+    {
+      "mp": 3.0,
+      "label": "Exit 3 - US 22 / NJ 173 / CR 519 (Phillipsburg, Alpha)",
+      "lat": 40.66779,
+      "lon": -75.13835
+    },
+    {
+      "mp": 4.0,
+      "label": "Exit 4 - Main St / CR 637 (Stewartsville, Warren Glen)",
+      "lat": 40.67106,
+      "lon": -75.10549
+    },
+    {
+      "mp": 6.0,
+      "label": "Exit 6 - Bloomsbury Rd / CR 632",
+      "lat": 40.66613,
+      "lon": -75.09405
+    },
+    {
+      "mp": 7.0,
+      "label": "Exit 7 - NJ 173 (Bloomsbury; truck weigh station)",
+      "lat": 40.65991,
+      "lon": -75.07026
+    },
+    {
+      "mp": 9.0,
+      "label": "Jugtown Mountain summit (approx.; steep grade both directions)",
+      "lat": 40.652,
+      "lon": -75.035
+    },
+    {
+      "mp": 11.0,
+      "label": "Exit 11 - Pattenburg Rd / NJ 173 (West Portal)",
+      "lat": 40.64468,
+      "lon": -75.00089
+    },
+    {
+      "mp": 12.0,
+      "label": "Exit 12 - Charlestown Rd / Perryville Rd / CR 625 (NJSP Perryville Station)",
+      "lat": 40.63512,
+      "lon": -74.97317
+    },
+    {
+      "mp": 13.4,
+      "label": "East end of INRIX section (Exit 12 ramps)",
+      "lat": 40.63557,
+      "lon": -74.96444
+    }
+  ],
+  "zones": [
+    {
+      "id": "Z1",
+      "name": "State border to Exit 3",
+      "mp_start": 0.0,
+      "mp_end": 3.0,
+      "note": "Delaware valley approach, toll-bridge plaza, river fog"
+    },
+    {
+      "id": "Z2",
+      "name": "Exit 3 to Exit 4",
+      "mp_start": 3.0,
+      "mp_end": 4.0,
+      "note": "Phillipsburg / Alpha; crash extract starts here (MP 3.7)"
+    },
+    {
+      "id": "Z3",
+      "name": "Exit 4 to Exit 6",
+      "mp_start": 4.0,
+      "mp_end": 6.0,
+      "note": "Stewartsville; rolling terrain toward the Musconetcong valley"
+    },
+    {
+      "id": "Z4",
+      "name": "Exit 6 to Exit 7",
+      "mp_start": 6.0,
+      "mp_end": 7.0,
+      "note": "Bloomsbury; weigh-station merge, truck entry and exit, valley fog"
+    },
+    {
+      "id": "Z5",
+      "name": "Exit 7 to Jugtown summit",
+      "mp_start": 7.0,
+      "mp_end": 9.0,
+      "note": "EB climb / WB descent of Jugtown Mountain; truck speed differential"
+    },
+    {
+      "id": "Z6",
+      "name": "Jugtown summit to Exit 11",
+      "mp_start": 9.0,
+      "mp_end": 11.0,
+      "note": "EB descent / WB climb; ridge exposure to snow, ice and fog"
+    },
+    {
+      "id": "Z7",
+      "name": "Exit 11 to Exit 12",
+      "mp_start": 11.0,
+      "mp_end": 12.0,
+      "note": "Pattenburg to Perryville; crash extract ends at MP 10.4 (Union Twp not yet pulled)"
+    },
+    {
+      "id": "Z8",
+      "name": "Exit 12 (Perryville)",
+      "mp_start": 12.0,
+      "mp_end": 13.4,
+      "note": "East end; NJSP Perryville Station; transition back to static 65 mph"
+    }
+  ],
+  "note_on_zones": "Zones follow the CDOT convention (interchange to interchange, adjusted for grade and visibility features). Grades, mile posts and the zone split at the Jugtown summit are placeholders until NJDOT SLD / LiDAR profile data is loaded."
+}

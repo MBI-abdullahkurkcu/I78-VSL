@@ -1,0 +1,7 @@
+season,days_with_data,partial,prcp_total_in_area_mean,prcp_days_ge_0.5_any_station,prcp_days_ge_1_any_station,prcp_max_in_any_station,snow_total_in_area_mean,snow_days_ge_0.1_area_mean,snow_days_ge_1_any_station,snow_days_ge_3_any_station,snow_days_ge_6_any_station,snow_max_in_any_station,snow_max_date,snwd_max_in_any_station,tmax_mean_f,tmax_max_f,tmin_mean_f,tmin_min_f,freeze_days_tmin_le_32_area_mean,freeze_thaw_days_area_mean
+2020-21,181,True,21.19,27,9,2.37,39.6,14,10,5,3,19.0,2021-02-02,24.0,57.8,95.0,37.3,9.0,81,66
+2021-22,365,False,58.79,56,26,7.31,17.7,16,9,5,0,5.5,2022-01-07,6.0,63.6,97.0,42.9,2.0,111,92
+2022-23,365,False,47.6,47,24,4.4,6.5,7,5,1,0,3.5,2023-02-28,3.5,64.9,99.0,42.4,3.0,117,110
+2023-24,366,False,63.86,63,34,5.12,22.9,7,7,5,3,12.0,2024-02-17,15.0,64.3,97.0,44.2,11.0,100,93
+2024-25,365,False,44.3,52,22,2.56,18.5,15,10,2,0,5.0,2024-12-21,5.0,63.7,99.0,42.3,-2.0,122,98
+2025-26,184,True,18.08,24,11,2.2,8.6,5,3,1,1,6.5,2025-12-14,6.5,67.8,96.0,46.4,10.0,47,38

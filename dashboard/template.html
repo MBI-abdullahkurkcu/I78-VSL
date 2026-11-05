@@ -1,0 +1,1566 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>I-78 VSL Scenarios</title>
+<meta name="description" content="Operational scenario workbook for the I-78 variable speed limit study: data explorer, correlations, key scenarios and impact estimates.">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  color-scheme:light;
+  --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f0efec; --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --accent:#2a78d6; --accent-ink:#ffffff;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --critical:#d03b3b;
+  --c0:#e1e0d9; --c1:#9ec5f4; --c2:#2a78d6; --c3:#eb6834; --c4:#e87ba4; --c5:#6250d6; --c6:#2d2470;
+  --seq1:#cde2fb; --seq2:#9ec5f4; --seq3:#5598e7; --seq4:#256abf; --seq5:#0d366b;
+  --o1:#86b6ef; --o2:#5598e7; --o3:#2a78d6; --o4:#1c5cab; --o5:#0d366b;
+  --sevO:#8d96a3; --sevC:#f2b134; --sevB:#eb6834; --sevA:#c5282f; --sevK:#5a0a14;
+  --shadow:0 1px 2px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#0d0d0d; --surface:#1a1a19; --surface-2:#262624; --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --accent:#3987e5;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+    --c0:#2c2c2a; --c1:#5598e7; --c2:#3987e5; --c3:#d95926; --c4:#d55181; --c5:#9085e9; --c6:#c9c2f5;
+    --seq1:#184f95; --seq2:#1c5cab; --seq3:#2a78d6; --seq4:#5598e7; --seq5:#b7d3f6;
+    --o1:#184f95; --o2:#1c5cab; --o3:#2a78d6; --o4:#5598e7; --o5:#b7d3f6;
+    --sevO:#7f8894; --sevC:#f6c553; --sevB:#f07a46; --sevA:#e0474f; --sevK:#ff8a94;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --surface-2:#262624; --ink:#f0efec; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --accent:#3987e5;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  --c0:#2c2c2a; --c1:#5598e7; --c2:#3987e5; --c3:#d95926; --c4:#d55181; --c5:#9085e9; --c6:#c9c2f5;
+  --seq1:#184f95; --seq2:#1c5cab; --seq3:#2a78d6; --seq4:#5598e7; --seq5:#b7d3f6;
+  --o1:#184f95; --o2:#1c5cab; --o3:#2a78d6; --o4:#5598e7; --o5:#b7d3f6;
+  --sevO:#7f8894; --sevC:#f6c553; --sevB:#f07a46; --sevA:#e0474f; --sevK:#ff8a94;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--page);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--accent)}
+h1,h2,h3,h4{margin:0 0 .4em;line-height:1.25}
+h1{font-size:1.5rem;font-weight:650}
+h2{font-size:1.25rem;font-weight:650;margin-top:.2em}
+h3{font-size:1.05rem;font-weight:650}
+h4{font-size:.95rem;font-weight:650;color:var(--ink-2)}
+p{margin:.3em 0 .8em}
+small,.muted{color:var(--muted)}
+code{font-size:.85em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+.wrap{max-width:1380px;margin:0 auto;padding:0 16px 48px}
+header.top{position:sticky;top:0;z-index:1200;background:var(--page);border-bottom:1px solid var(--border);padding:12px 0 0}
+.top-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px 20px}
+.top-row .title{flex:1 1 320px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.78rem;border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
+.chip .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+button.chip{appearance:none;font:inherit;cursor:pointer}
+button.chip:hover,button.chip:focus-visible{border-color:var(--accent);color:var(--ink);outline:none}
+button.chip .more{color:var(--muted);font-size:.7rem}
+.modal-bg{position:fixed;inset:0;background:rgba(10,14,20,.5);z-index:3000;display:none;align-items:flex-start;justify-content:center;padding:32px 16px;overflow:auto}
+.modal-bg.open{display:flex}
+.modal{background:var(--page);color:var(--ink);border:1px solid var(--border);border-radius:12px;max-width:960px;width:100%;padding:18px 20px 22px;box-shadow:0 20px 60px rgba(0,0,0,.35);position:relative}
+.modal h2{margin:0 36px 4px 0;font-size:1.25rem}
+.modal h4{margin:16px 0 6px}
+.modal .close{position:absolute;top:10px;right:10px}
+.modal .kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:.86rem;margin:8px 0}
+.modal .kv b{color:var(--ink-2);font-weight:600}
+.modal .grid.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.modal .stat .v{font-size:1.45rem}
+@media (max-width:640px){ .modal{padding:14px} .modal-bg{padding:12px 8px} .modal .kv{grid-template-columns:1fr} }
+.dot.good{background:var(--good)} .dot.warn{background:var(--warn)} .dot.critical{background:var(--critical)} .dot.neutral{background:var(--muted)}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;margin-top:10px}
+nav.tabs button{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-2);padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{color:var(--ink)}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.panel{display:none;padding-top:18px}
+.panel.active{display:block}
+.subtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.subtabs button{appearance:none;font:inherit;font-size:.88rem;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);cursor:pointer}
+.subtabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.subpanel{display:none} .subpanel.active{display:block}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow);min-width:0}
+.card.full{grid-column:1/-1}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.card-head h3{margin:0}
+.card-head .sub{font-size:.85rem;color:var(--ink-2);margin-top:2px}
+.toggle{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;flex:none}
+.toggle button{appearance:none;border:0;background:none;color:var(--ink-2);font:inherit;font-size:.78rem;padding:3px 9px;cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink)}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.tip{position:absolute;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.15);border-radius:6px;padding:6px 9px;font-size:.78rem;line-height:1.35;white-space:nowrap;z-index:5;display:none}
+.tip b{font-weight:650}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.8rem;color:var(--ink-2);margin:6px 0 2px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat .v{font-size:1.9rem;font-weight:650;line-height:1.1}
+.stat .l{font-size:.85rem;color:var(--ink-2)}
+.stat .n{font-size:.78rem;color:var(--muted)}
+table.t{width:100%;border-collapse:collapse;font-size:.84rem}
+table.t th,table.t td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--grid);vertical-align:top}
+table.t th{color:var(--ink-2);font-weight:600;background:var(--surface-2);position:sticky;top:0}
+table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl-scroll{max-height:420px;overflow:auto;border:1px solid var(--grid);border-radius:6px}
+.tableview{display:none} .tableview.show{display:block}
+.chartview.hide{display:none}
+.await{border-style:dashed;background:transparent}
+.await h3{display:flex;align-items:center;gap:8px}
+.badge{display:inline-block;font-size:.72rem;font-weight:600;padding:1px 7px;border-radius:4px;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--border);vertical-align:middle}
+.badge.warn{background:rgba(250,178,25,.18);color:var(--ink)}
+.badge.good{background:rgba(12,163,12,.15);color:var(--ink)}
+.badge.crit{background:rgba(208,59,59,.14);color:var(--ink)}
+ul.tight{margin:.2em 0 .6em 1.2em;padding:0} ul.tight li{margin:.15em 0}
+.map{height:calc(100vh - 150px);min-height:520px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
+.map.fullscreen{position:fixed;inset:0;height:100vh;min-height:0;z-index:2500;border-radius:0;border:0}
+#inrixwrap{display:none;position:relative}
+#inrixwrap iframe{width:100%;height:100%;border:0;display:block;background:var(--surface-2)}
+.mapview .mapbtn[aria-pressed="true"]{border-color:var(--ink);font-weight:600;background:var(--surface-2)}
+.mapbtn{appearance:none;font:inherit;font-size:.82rem;border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer}
+.mapbtn:hover{border-color:var(--accent)}
+.filters input[type=range]{width:110px;accent-color:var(--accent);vertical-align:middle}
+.segpanel{margin-top:14px}
+.segpanel .seghead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:8px}
+.segpanel .segstats{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.84rem;color:var(--ink-2);margin:4px 0 8px}
+.segpanel .segstats b{color:var(--ink)}
+.leaflet-container .leaflet-interactive{cursor:pointer}
+.filters{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:8px 0 10px;font-size:.84rem;color:var(--ink-2)}
+.filters label{display:inline-flex;align-items:center;gap:5px}
+.filters select{font:inherit;font-size:.84rem;padding:3px 6px;border:1px solid var(--axis);border-radius:4px;background:var(--surface);color:var(--ink)}
+.filters input[type=checkbox]{accent-color:var(--accent)}
+.maplegend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:.78rem;color:var(--ink-2);margin:8px 0 2px;align-items:center}
+.maplegend span{display:inline-flex;align-items:center;gap:5px}
+.maplegend i{display:inline-block;width:12px;height:12px;border-radius:50%}
+.maplegend i.sq{border-radius:2px;width:14px;height:8px}
+.maplegend .ramp{display:inline-flex;gap:1px}
+.maplegend .ramp i{border-radius:0;width:14px;height:10px}
+.zone-label{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:.72rem;font-weight:600;color:var(--ink);white-space:nowrap}
+.rwis-label{background:var(--warn);color:#1a1a1a;border-radius:4px;padding:1px 5px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.stat-sig{color:var(--good);font-weight:600} .stat-ns{color:var(--muted)}
+.leaflet-container{background:var(--surface-2)}
+.leaflet-container{font:inherit}
+.scen{border-left:4px solid var(--accent)}
+.scen .meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.82rem;color:var(--ink-2);margin:4px 0 10px}
+.scen .meta b{color:var(--ink)}
+.steps{counter-reset:s;margin:.2em 0 .6em;padding:0;list-style:none}
+.steps li{position:relative;padding-left:30px;margin:.3em 0}
+.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:2px;width:20px;height:20px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);font-size:.72rem;font-weight:650;display:flex;align-items:center;justify-content:center;color:var(--ink-2)}
+.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 14px}
+.inputs label{display:flex;flex-direction:column;font-size:.8rem;color:var(--ink-2);gap:2px}
+.inputs input,.inputs select{font:inherit;font-size:.9rem;padding:5px 7px;border:1px solid var(--axis);border-radius:6px;background:var(--surface);color:var(--ink);width:100%}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:.88rem}
+.kv b{font-variant-numeric:tabular-nums}
+.note{font-size:.82rem;color:var(--ink-2);border-left:3px solid var(--warn);padding:4px 10px;background:var(--surface-2);border-radius:0 6px 6px 0;margin:.4em 0}
+.finding{border-left:3px solid var(--accent);padding:4px 10px;margin:.4em 0;background:var(--surface-2);border-radius:0 6px 6px 0}
+.zonebar{display:flex;gap:3px;margin:8px 0}
+.zonebar div{flex:1;text-align:center;padding:8px 2px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);font-size:.78rem;line-height:1.2}
+.zonebar div b{display:block;font-size:1.15rem}
+.zonebar div.hot{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.zonebar div.step{background:var(--seq1)}
+.themebtn{appearance:none;font:inherit;font-size:.8rem;border:1px solid var(--border);background:var(--surface);color:var(--ink-2);border-radius:6px;padding:4px 10px;cursor:pointer}
+.inline-in{width:90px;font:inherit;padding:3px 6px;border:1px solid var(--axis);border-radius:4px;background:var(--surface);color:var(--ink)}
+#errlog{display:none;white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:.75rem;color:var(--critical);padding:8px;border:1px solid var(--critical);border-radius:6px;margin-top:10px}
+@media (max-width:640px){ .stat .v{font-size:1.5rem} .map{height:380px} }
+@media print{ header.top{position:static} .panel{display:block!important} nav.tabs,.themebtn,.modal-bg{display:none} }
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <div class="top-row">
+    <div class="title">
+      <h1>I-78 Variable Speed Limit: Scenario Workbook</h1>
+      <div class="muted" id="subtitle"></div>
+    </div>
+    <div class="chips" id="status-chips"></div>
+    <button class="themebtn" id="themebtn" type="button">Theme: auto</button>
+  </div>
+  <div class="modal-bg" id="ds-modal" role="dialog" aria-modal="true" aria-labelledby="ds-modal-title"><div class="modal"><button class="themebtn close" type="button" id="ds-modal-close" aria-label="Close">Close</button><div id="ds-modal-body"></div></div></div>
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="data" aria-selected="true">1 · Data Explorer</button>
+    <button role="tab" data-tab="map">2 · Map (all data)</button>
+    <button role="tab" data-tab="corr">3 · Correlations &amp; Statistics</button>
+    <button role="tab" data-tab="scen">4 · Key Scenarios</button>
+    <button role="tab" data-tab="impact">5 · Potential Impact</button>
+    <button role="tab" data-tab="method">6 · Method &amp; Sources</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+<div id="errlog"></div>
+
+<section class="panel active" id="panel-data">
+  <div class="subtabs" id="data-subtabs">
+    <button data-sub="overview" aria-selected="true">Overview</button>
+    <button data-sub="crash">Crash data</button>
+    <button data-sub="tt">Travel times (INRIX)</button>
+    <button data-sub="climate">Climate readings</button>
+  </div>
+  <div class="subpanel active" id="sub-overview"></div>
+  <div class="subpanel" id="sub-crash"></div>
+  <div class="subpanel" id="sub-tt"></div>
+  <div class="subpanel" id="sub-climate"></div>
+</section>
+<section class="panel" id="panel-map"></section>
+<section class="panel" id="panel-corr"></section>
+<section class="panel" id="panel-scen"></section>
+<section class="panel" id="panel-impact"></section>
+<section class="panel" id="panel-method"></section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const DATA = /*__DATA__*/;
+// Full-page INRIX map (I78_INRIX_Map.html) inlined by the build so tab 2 can embed it; null when not built.
+const INRIX_MAP_SRC = /*__INRIX_MAP__*/null;
+</script>
+<script>
+/* ------------------------------------------------------------------ */
+/* Utilities                                                           */
+/* ------------------------------------------------------------------ */
+window.addEventListener('error', e => { const el = document.getElementById('errlog'); el.style.display='block'; el.textContent += (e.message||e) + ' @' + (e.lineno||'') + '\n'; });
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+function h(tag, attrs={}, ...kids){
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs||{})){
+    if (k==='class') e.className=v; else if (k==='html') e.innerHTML=v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (v!==null && v!==undefined) e.setAttribute(k, v);
+  }
+  for (const k of kids.flat()){ if (k===null||k===undefined) continue; e.append(k.nodeType? k : document.createTextNode(String(k))); }
+  return e;
+}
+const SVGNS='http://www.w3.org/2000/svg';
+function s(tag, attrs={}, ...kids){ const e=document.createElementNS(SVGNS, tag); for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v); for (const k of kids.flat()){ if(k==null) continue; e.append(k.nodeType? k : document.createTextNode(String(k))); } return e; }
+const fmt = (n, d=0) => (n===null||n===undefined||Number.isNaN(n)) ? '–' : Number(n).toLocaleString('en-US',{minimumFractionDigits:d, maximumFractionDigits:d});
+const pct = (n, d=0) => (n===null||n===undefined) ? '–' : fmt(100*n, d)+'%';
+const money = n => '$' + fmt(n, 0);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DOW=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const HOURS=Array.from({length:24},(_,i)=>String(i).padStart(2,'0'));
+const C = DATA.climate, COR = DATA.corridor, CR = DATA.crashes, IX = DATA.inrix, X = DATA.cross || {};
+const hasC = C && C.status==='loaded', hasCR = CR && CR.status==='loaded', hasIX = IX && IX.status==='loaded';
+const CLS = (hasC && C.classes) || [];
+const CLS_VAR = ['--c0','--c1','--c2','--c3','--c4','--c5','--c6'];
+const CLS_SHORT = ['Dry','Wet','Heavy rain','Freezing precip','Light snow','Significant snow','Major snow'];
+const CLS_AXIS = ['Dry','Wet','Hvy rain','Freezing','Lt snow','Sig snow','Maj snow'];
+const clsColor = i => css(CLS_VAR[i]);
+const SEV = ['O','C','B','A','K'], SEV_LABEL={O:'No injury (O)',C:'Possible injury (C)',B:'Minor injury (B)',A:'Serious injury (A)',K:'Fatal (K)'}, SEV_VAR={O:'--o1',C:'--o2',B:'--o3',A:'--o4',K:'--o5'};
+const py = hasC ? C.period.per_year : {};
+const ST = hasCR ? CR.stats : {};
+const S = (X.stats && !X.stats.error) ? X.stats : null;
+if (hasIX && IX.centerline_routed && IX.centerline_routed.length>2) COR.centerline = IX.centerline_routed;
+const SEV_COLOR_VAR={O:'--sevO',C:'--sevC',B:'--sevB',A:'--sevA',K:'--sevK'};
+const ADV_WEATHER = ['Rain','Snow','Fog/Smog/Smoke','Sleet/Hail','Freezing Rain'];
+const isAdvPoint = p => p.surface!=='Dry' || ADV_WEATHER.includes(p.weather);
+
+/* theme ---------------------------------------------------------- */
+(function(){
+  let t=null; try{ t = localStorage.getItem('i78-theme'); }catch(e){}
+  const btn=$('#themebtn');
+  const apply=()=>{ if(t) document.documentElement.setAttribute('data-theme',t); else document.documentElement.removeAttribute('data-theme'); btn.textContent='Theme: '+(t||'auto'); };
+  apply();
+  btn.addEventListener('click',()=>{ t = t===null?'light': t==='light'?'dark':null; try{ t?localStorage.setItem('i78-theme',t):localStorage.removeItem('i78-theme'); }catch(e){} apply(); rerenderAll(); syncInrixTheme(t); });
+})();
+
+/* ------------------------------------------------------------------ */
+/* Chart card + table toggle                                           */
+/* ------------------------------------------------------------------ */
+const RENDERERS = [];
+function rerenderAll(){ for (const r of RENDERERS) { try { r(); } catch(e){ console.error(e); } } }
+let resizeT=null; window.addEventListener('resize', ()=>{ clearTimeout(resizeT); resizeT=setTimeout(rerenderAll, 150); });
+
+function chartCard(parent, {title, sub, full=false, render, table, legend}){
+  const card = h('div', {class:'card'+(full?' full':'')});
+  const tog = h('div',{class:'toggle'});
+  const bChart = h('button',{type:'button','aria-pressed':'true'},'Chart');
+  const bTable = h('button',{type:'button','aria-pressed':'false'},'Table');
+  tog.append(bChart,bTable);
+  const head = h('div',{class:'card-head'}, h('div',{}, h('h3',{},title), sub? h('div',{class:'sub'},sub):null), table? tog : null);
+  const chartWrap = h('div',{class:'chartview'});
+  const legendEl = legend ? h('div',{class:'legend'}) : null;
+  const body = h('div',{class:'chart'});
+  if (legendEl) chartWrap.append(legendEl); chartWrap.append(body);
+  const tableWrap = h('div',{class:'tableview'});
+  if (table) tableWrap.append(buildTable(table));
+  card.append(head, chartWrap, tableWrap);
+  parent.append(card);
+  const doRender = ()=>{ body.innerHTML=''; if (legendEl){ legendEl.innerHTML=''; legend.forEach(l=>legendEl.append(h('span',{}, h('i',{style:'background:'+(l.var?css(l.var):l.color)}), l.name))); } render(body); };
+  RENDERERS.push(doRender);
+  bChart.onclick=()=>{ bChart.setAttribute('aria-pressed','true'); bTable.setAttribute('aria-pressed','false'); chartWrap.classList.remove('hide'); tableWrap.classList.remove('show'); doRender(); };
+  bTable.onclick=()=>{ bChart.setAttribute('aria-pressed','false'); bTable.setAttribute('aria-pressed','true'); chartWrap.classList.add('hide'); tableWrap.classList.add('show'); };
+  requestAnimationFrame(doRender);
+  return card;
+}
+function buildTable({columns, rows, numeric}){
+  const wrap = h('div',{class:'tbl-scroll'});
+  const t = h('table',{class:'t'});
+  t.append(h('thead',{}, h('tr',{}, columns.map((c,i)=>h('th',{class:(numeric&&numeric[i])?'num':''},c)))));
+  t.append(h('tbody',{}, rows.map(r=>h('tr',{}, r.map((v,i)=>h('td',{class:(numeric&&numeric[i])?'num':''}, (v===null||v===undefined)?'–':(v.nodeType?v:String(v))))))));
+  wrap.append(t); return wrap;
+}
+function tooltip(container){
+  let tip = container.querySelector('.tip'); if(!tip){ tip=h('div',{class:'tip'}); container.append(tip); }
+  return {
+    show(html, x, y){ tip.innerHTML=html; tip.style.display='block'; const W=container.clientWidth; const tw=tip.offsetWidth; let lx = x+12; if (lx+tw > W) lx = x-12-tw; tip.style.left=Math.max(0,lx)+'px'; tip.style.top=Math.max(0,y-10)+'px'; },
+    hide(){ tip.style.display='none'; }
+  };
+}
+function niceTicks(min, max, n=5){
+  if (max===min) max=min+1;
+  const span=max-min, step0=span/n, mag=Math.pow(10,Math.floor(Math.log10(step0))), r=step0/mag;
+  const step = (r<1.5?1: r<3?2: r<7?5:10)*mag;
+  const lo=Math.floor(min/step)*step, hi=Math.ceil(max/step)*step; const out=[]; for(let v=lo; v<=hi+1e-9; v+=step) out.push(+v.toFixed(10)); return out;
+}
+
+/* line chart ------------------------------------------------------ */
+function lineChart(el, {x, series, height=240, yMin=null, yMax=null, yFmt=v=>fmt(v), xLabel=(i)=>x[i], xTicks=null, refLines=[], area=false, pad={l:44,r:12,t:10,b:28}}){
+  const W = Math.max(320, el.clientWidth), H = height;
+  const iw = W-pad.l-pad.r, ih = H-pad.t-pad.b;
+  const all = series.flatMap(sr=>sr.values.filter(v=>v!==null&&v!==undefined));
+  let lo = yMin===null? Math.min(...all) : yMin, hi = yMax===null? Math.max(...all) : yMax;
+  if (yMin===null && lo>0 && area) lo=0;
+  const ticks = niceTicks(lo, hi, 5); lo=Math.min(lo,ticks[0]); hi=Math.max(hi,ticks[ticks.length-1]);
+  const n = x.length, xs = i => pad.l + (n>1? i/(n-1):0.5)*iw, ys = v => pad.t + ih - (v-lo)/(hi-lo)*ih;
+  const svg = s('svg',{viewBox:`0 0 ${W} ${H}`, width:W, height:H});
+  for (const t of ticks){ svg.append(s('line',{x1:pad.l,x2:W-pad.r,y1:ys(t),y2:ys(t),stroke:css('--grid'),'stroke-width':1})); svg.append(s('text',{x:pad.l-6,y:ys(t)+4,'text-anchor':'end','font-size':11,fill:css('--muted')}, yFmt(t))); }
+  const xt = xTicks || Array.from({length:Math.min(n, 8)},(_,k)=>Math.round(k*(n-1)/Math.max(1,Math.min(n,8)-1)));
+  for (const i of xt){ svg.append(s('text',{x:xs(i),y:H-8,'text-anchor':'middle','font-size':11,fill:css('--muted')}, xLabel(i))); }
+  svg.append(s('line',{x1:pad.l,x2:W-pad.r,y1:pad.t+ih,y2:pad.t+ih,stroke:css('--axis')}));
+  for (const r of refLines){ svg.append(s('line',{x1:pad.l,x2:W-pad.r,y1:ys(r.y),y2:ys(r.y),stroke:css('--muted'),'stroke-dasharray':'4 3'})); svg.append(s('text',{x:W-pad.r,y:ys(r.y)-4,'text-anchor':'end','font-size':11,fill:css('--ink-2')}, r.label)); }
+  for (const sr of series){
+    const color = sr.var? css(sr.var) : sr.color;
+    let d='', started=false;
+    sr.values.forEach((v,i)=>{ if(v===null||v===undefined){started=false;return;} d += (started?'L':'M')+xs(i).toFixed(1)+' '+ys(v).toFixed(1); started=true; });
+    if (area){ const first=sr.values.findIndex(v=>v!=null), last=sr.values.length-1-[...sr.values].reverse().findIndex(v=>v!=null); svg.append(s('path',{d:d+`L${xs(last)} ${ys(lo)}L${xs(first)} ${ys(lo)}Z`,fill:color,'fill-opacity':.12,stroke:'none'})); }
+    svg.append(s('path',{d,fill:'none',stroke:color,'stroke-width':sr.width||1.8,'stroke-linejoin':'round'}));
+  }
+  const cross = s('line',{x1:0,x2:0,y1:pad.t,y2:pad.t+ih,stroke:css('--ink-2'),'stroke-width':1,visibility:'hidden'}); svg.append(cross);
+  const dots = series.map(sr=>{ const c=s('circle',{r:4,fill:sr.var?css(sr.var):sr.color,stroke:css('--surface'),'stroke-width':2,visibility:'hidden'}); svg.append(c); return c; });
+  const tip = tooltip(el);
+  const hit = s('rect',{x:pad.l,y:pad.t,width:iw,height:ih,fill:'transparent'}); svg.append(hit);
+  hit.addEventListener('mousemove', ev => { const r=svg.getBoundingClientRect(); const px=(ev.clientX-r.left)*(W/r.width); const i=Math.max(0,Math.min(n-1,Math.round((px-pad.l)/iw*(n-1)))); cross.setAttribute('x1',xs(i)); cross.setAttribute('x2',xs(i)); cross.setAttribute('visibility','visible');
+    let html='<b>'+xLabel(i,true)+'</b>'; series.forEach((sr,k)=>{ const v=sr.values[i]; if(v==null){dots[k].setAttribute('visibility','hidden');} else { dots[k].setAttribute('cx',xs(i)); dots[k].setAttribute('cy',ys(v)); dots[k].setAttribute('visibility','visible'); } html+='<br>'+sr.name+': <b>'+(v==null?'–':yFmt(v))+'</b>'; });
+    tip.show(html, xs(i)*(r.width/W), (ev.clientY-r.top)); });
+  hit.addEventListener('mouseleave', ()=>{ cross.setAttribute('visibility','hidden'); dots.forEach(d=>d.setAttribute('visibility','hidden')); tip.hide(); });
+  el.append(svg);
+}
+
+/* bar chart (grouped or stacked) ------------------------------------ */
+function barChart(el, {categories, series, stacked=false, height=240, yFmt=v=>fmt(v), pad={l:44,r:12,t:10,b:28}, labelEvery=1, yMax=null}){
+  const W = Math.max(320, el.clientWidth), H=height, iw=W-pad.l-pad.r, ih=H-pad.t-pad.b, n=categories.length;
+  let hi = yMax!==null? yMax : (stacked ? Math.max(...categories.map((_,i)=>series.reduce((a,sr)=>a+(sr.values[i]||0),0))) : Math.max(...series.flatMap(sr=>sr.values.map(v=>v||0))));
+  if (!(hi>0)) hi=1;
+  const ticks=niceTicks(0,hi,5); hi=ticks[ticks.length-1];
+  const ys=v=>pad.t+ih-(v/hi)*ih, bw=iw/n, gap=Math.min(6,bw*.25);
+  const svg=s('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H});
+  for(const t of ticks){ svg.append(s('line',{x1:pad.l,x2:W-pad.r,y1:ys(t),y2:ys(t),stroke:css('--grid')})); svg.append(s('text',{x:pad.l-6,y:ys(t)+4,'text-anchor':'end','font-size':11,fill:css('--muted')},yFmt(t))); }
+  svg.append(s('line',{x1:pad.l,x2:W-pad.r,y1:pad.t+ih,y2:pad.t+ih,stroke:css('--axis')}));
+  const tip=tooltip(el);
+  categories.forEach((c,i)=>{
+    const x0=pad.l+i*bw+gap/2, bwi=bw-gap;
+    if (i%labelEvery===0) svg.append(s('text',{x:x0+bwi/2,y:H-8,'text-anchor':'middle','font-size':11,fill:css('--muted')},c));
+    const g=s('g'); let acc=0;
+    const k=series.length, sw = stacked? bwi : (bwi-2*(k-1))/k;
+    series.forEach((sr,j)=>{
+      const v=sr.values[i]||0; const color=sr.var?css(sr.var):sr.color;
+      let x=x0, y, hgt;
+      if (stacked){ y=ys(acc+v); hgt=ys(acc)-ys(acc+v); acc+=v; if(hgt>2){ y+=1; hgt-=2; } }
+      else { x=x0+j*(sw+2); y=ys(v); hgt=ys(0)-ys(v); }
+      if (v>0) g.append(s('rect',{x,y,width:stacked?bwi:sw,height:Math.max(0,hgt),fill:color,rx:2}));
+    });
+    const hit=s('rect',{x:x0-gap/2,y:pad.t,width:bw,height:ih,fill:'transparent'});
+    hit.addEventListener('mousemove',ev=>{ const r=svg.getBoundingClientRect(); let html='<b>'+c+'</b>'; let tot=0; series.forEach(sr=>{ const v=sr.values[i]; tot+=v||0; html+='<br>'+sr.name+': <b>'+(v==null?'–':yFmt(v))+'</b>'; }); if(stacked&&series.length>1) html+='<br>Total: <b>'+yFmt(tot)+'</b>'; tip.show(html,(x0+bw/2)*(r.width/W),ev.clientY-r.top); });
+    hit.addEventListener('mouseleave',()=>tip.hide());
+    svg.append(g,hit);
+  });
+  el.append(svg);
+}
+
+/* horizontal bars for ranked categories --------------------------- */
+function hbarChart(el, {categories, series, stacked=true, yFmt=v=>fmt(v), rowH=22, labelW=190}){
+  const W=Math.max(320, el.clientWidth), n=categories.length, H=n*rowH+24, left=labelW, iw=W-left-12;
+  let hi = stacked ? Math.max(...categories.map((_,i)=>series.reduce((a,sr)=>a+(sr.values[i]||0),0))) : Math.max(...series.flatMap(sr=>sr.values));
+  if(!(hi>0)) hi=1; const ticks=niceTicks(0,hi,4); hi=ticks[ticks.length-1];
+  const xs=v=>left+v/hi*iw;
+  const svg=s('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H});
+  for(const t of ticks){ svg.append(s('line',{x1:xs(t),x2:xs(t),y1:0,y2:n*rowH,stroke:css('--grid')})); svg.append(s('text',{x:xs(t),y:H-6,'text-anchor':'middle','font-size':11,fill:css('--muted')},yFmt(t))); }
+  const tip=tooltip(el);
+  categories.forEach((c,i)=>{
+    const y=i*rowH+3, hh=rowH-6; let acc=0;
+    svg.append(s('text',{x:left-8,y:y+hh/2+4,'text-anchor':'end','font-size':11,fill:css('--ink-2')}, c.length>30?c.slice(0,29)+'…':c));
+    series.forEach((sr,j)=>{ const v=sr.values[i]||0; const color=sr.var?css(sr.var):sr.color; if(stacked){ if(v>0) svg.append(s('rect',{x:xs(acc)+(acc>0?1:0),y,width:Math.max(0,xs(acc+v)-xs(acc)-(acc>0?1:0)),height:hh,fill:color,rx:2})); acc+=v; } else { const sh=hh/series.length; if(v>0) svg.append(s('rect',{x:left,y:y+j*sh,width:xs(v)-left,height:sh-1,fill:color,rx:2})); } });
+    const hit=s('rect',{x:0,y:i*rowH,width:W,height:rowH,fill:'transparent'});
+    hit.addEventListener('mousemove',ev=>{ const r=svg.getBoundingClientRect(); let html='<b>'+c+'</b>'; let tot=0; series.forEach(sr=>{ tot+=sr.values[i]||0; html+='<br>'+sr.name+': <b>'+yFmt(sr.values[i]||0)+'</b>'; }); if(stacked&&series.length>1) html+='<br>Total: <b>'+yFmt(tot)+'</b>'; tip.show(html,(ev.clientX-r.left),ev.clientY-r.top); });
+    hit.addEventListener('mouseleave',()=>tip.hide()); svg.append(hit);
+  });
+  el.append(svg);
+}
+
+/* calendar strip: one row per year, one column per day --------------- */
+function calendarStrip(el, daily){
+  const years=[...new Set(daily.date.map(d=>d.slice(0,4)))];
+  const W=Math.max(320, el.clientWidth), left=40, top=18, rowH=18, cellW=(W-left-8)/366;
+  const H=top+years.length*rowH+22;
+  const svg=s('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H});
+  const doy = ds => { const d=new Date(ds+'T00:00:00Z'); const j=new Date(Date.UTC(d.getUTCFullYear(),0,1)); return Math.round((d-j)/864e5); };
+  MONTHS.forEach((m,k)=>{ const dd=doy(`2024-${String(k+1).padStart(2,'0')}-01`); svg.append(s('text',{x:left+dd*cellW,y:12,'font-size':11,fill:css('--muted')},m)); });
+  years.forEach((y,r)=>svg.append(s('text',{x:left-6,y:top+r*rowH+13,'text-anchor':'end','font-size':11,fill:css('--ink-2')},y)));
+  const tip=tooltip(el);
+  const g=s('g');
+  years.forEach((y,r)=>g.append(s('rect',{x:left,y:top+r*rowH+1,width:366*cellW,height:rowH-3,fill:clsColor(0),opacity:.6})));
+  daily.date.forEach((ds,i)=>{ const r=years.indexOf(ds.slice(0,4)); const c=daily.cls[i]; if(c===0) return; g.append(s('rect',{x:left+doy(ds)*cellW,y:top+r*rowH+1,width:Math.max(1,cellW),height:rowH-3,fill:clsColor(c)})); });
+  svg.append(g);
+  const hit=s('rect',{x:left,y:top,width:366*cellW,height:years.length*rowH,fill:'transparent'});
+  hit.addEventListener('mousemove',ev=>{ const rb=svg.getBoundingClientRect(); const px=(ev.clientX-rb.left)*(W/rb.width), py=(ev.clientY-rb.top)*(H/rb.height); const r=Math.floor((py-top)/rowH), d=Math.floor((px-left)/cellW); if(r<0||r>=years.length) return; const y=years[r]; const dt=new Date(Date.UTC(+y,0,1+d)); const ds=dt.toISOString().slice(0,10); const i=daily.date.indexOf(ds); if(i<0){tip.hide();return;}
+    tip.show(`<b>${ds}</b> · ${CLS_SHORT[daily.cls[i]]}<br>Rain (area mean / max): ${fmt(daily.prcp_mean[i],2)} / ${fmt(daily.prcp_max[i],2)} in<br>Snow (max station): ${fmt(daily.snow_max[i],1)} in · depth ${fmt(daily.snwd_max[i],1)} in<br>Tmin / Tmax: ${fmt(daily.tmin[i])} / ${fmt(daily.tmax[i])} °F`, px*(rb.width/W), ev.clientY-rb.top); });
+  hit.addEventListener('mouseleave',()=>tip.hide());
+  svg.append(hit); el.append(svg);
+}
+
+/* heat map ----------------------------------------------------------- */
+function heatmap(el, {rows, cols, values, fmtV=v=>fmt(v), rowH=24, labelW=46, colLabelEvery=1}){
+  const W=Math.max(320, el.clientWidth), left=labelW, top=22, cw=(W-left-6)/cols.length, rh=rowH, H=top+rows.length*rh+6;
+  const svg=s('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H});
+  const flat=values.flat().filter(v=>v!=null), mx=Math.max(...flat,1e-9);
+  const ramp=['--seq1','--seq2','--seq3','--seq4','--seq5'].map(css);
+  cols.forEach((c,j)=>{ if(j%colLabelEvery===0) svg.append(s('text',{x:left+j*cw+cw/2,y:14,'text-anchor':'middle','font-size':11,fill:css('--muted')},c)); });
+  const tip=tooltip(el);
+  rows.forEach((r,i)=>{ svg.append(s('text',{x:left-6,y:top+i*rh+rh/2+4,'text-anchor':'end','font-size':11,fill:css('--ink-2')},r));
+    cols.forEach((c,j)=>{ const v=values[i][j]; const k=(v==null||v<=0)?-1:Math.min(4,Math.floor(v/mx*4.999)); const rect=s('rect',{x:left+j*cw+1,y:top+i*rh+1,width:Math.max(1,cw-2),height:rh-2,rx:2,fill:k<0?css('--surface-2'):ramp[k]});
+      rect.addEventListener('mousemove',ev=>{ const rb=svg.getBoundingClientRect(); tip.show(`<b>${r} · ${c}</b><br>${fmtV(v)}`,(left+j*cw+cw/2)*(rb.width/W),ev.clientY-rb.top); }); rect.addEventListener('mouseleave',()=>tip.hide()); svg.append(rect); }); });
+  el.append(svg);
+}
+
+/* dot-and-whisker chart (rate ratios with CI, medians with ranges) --- */
+function ciChart(el, {rows, series, xFmt=v=>fmt(v,2), refLine=null, log=false, rowH=null, labelW=170, xMin=null, xMax=null, pad={r:14,t:8,b:26}}){
+  const W=Math.max(320, el.clientWidth), k=series.length; rowH = rowH || (k>1? 14*k+8 : 24);
+  const H=pad.t+rows.length*rowH+pad.b, iw=W-labelW-pad.r;
+  const vals=rows.flatMap(r=>r.vals.flatMap(v=>v?[v.lo,v.hi,v.v]:[])).filter(v=>v!=null && (!log||v>0));
+  let lo=xMin!==null?xMin:Math.min(...vals), hi=xMax!==null?xMax:Math.max(...vals);
+  if (refLine!==null){ lo=Math.min(lo,refLine); hi=Math.max(hi,refLine); }
+  let ticks; if(log){ const cands=[0.25,0.5,1,2,4,8,16]; ticks=cands.filter(t=>t>=lo*0.95&&t<=hi*1.05); if(ticks.length<2) ticks=[0.5,1,2]; lo=Math.min(lo,ticks[0]); hi=Math.max(hi,ticks[ticks.length-1]); } else { ticks=niceTicks(lo,hi,4); lo=ticks[0]; hi=ticks[ticks.length-1]; }
+  const xs=v=> labelW + (log? (Math.log(v)-Math.log(lo))/(Math.log(hi)-Math.log(lo)) : (v-lo)/(hi-lo))*iw;
+  const svg=s('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H});
+  ticks.forEach(t=>{ svg.append(s('line',{x1:xs(t),x2:xs(t),y1:pad.t,y2:H-pad.b,stroke:css('--grid')})); svg.append(s('text',{x:xs(t),y:H-8,'text-anchor':'middle','font-size':11,fill:css('--muted')},xFmt(t))); });
+  if (refLine!==null) svg.append(s('line',{x1:xs(refLine),x2:xs(refLine),y1:pad.t,y2:H-pad.b,stroke:css('--ink-2'),'stroke-dasharray':'4 3'}));
+  const tip=tooltip(el);
+  rows.forEach((r,i)=>{ const y0=pad.t+i*rowH;
+    if (i%2===1) svg.append(s('rect',{x:0,y:y0,width:W,height:rowH,fill:css('--surface-2'),opacity:.5}));
+    svg.append(s('text',{x:labelW-8,y:y0+rowH/2+4,'text-anchor':'end','font-size':11,fill:css('--ink-2')},r.label));
+    series.forEach((sr,j)=>{ const v=r.vals[j]; if(!v||v.v==null) return; const y=y0+(j+0.5)*(rowH/k); const color=sr.var?css(sr.var):sr.color;
+      if (v.lo!=null&&v.hi!=null&&(!log||(v.lo>0))) svg.append(s('line',{x1:xs(Math.max(v.lo,lo)),x2:xs(Math.min(v.hi,hi)),y1:y,y2:y,stroke:color,'stroke-width':2,'stroke-linecap':'round'}));
+      svg.append(s('circle',{cx:xs(Math.min(Math.max(v.v,lo),hi)),cy:y,r:4.5,fill:color,stroke:css('--surface'),'stroke-width':1.5})); });
+    const hit=s('rect',{x:0,y:y0,width:W,height:rowH,fill:'transparent'});
+    hit.addEventListener('mousemove',ev=>{ const rb=svg.getBoundingClientRect(); let html='<b>'+r.label+'</b>'; series.forEach((sr,j)=>{ const v=r.vals[j]; if(!v) return; html+='<br>'+sr.name+': <b>'+xFmt(v.v)+'</b>'+(v.lo!=null?' ['+xFmt(v.lo)+' to '+xFmt(v.hi)+']':'')+(v.note?' · '+v.note:''); }); tip.show(html,(ev.clientX-rb.left),ev.clientY-rb.top); });
+    hit.addEventListener('mouseleave',()=>tip.hide()); svg.append(hit); });
+  el.append(svg);
+}
+/* diverging correlation matrix ------------------------------------- */
+function hexLerp(a,b,t){ const pa=a.match(/\w\w/g).map(x=>parseInt(x,16)), pb=b.match(/\w\w/g).map(x=>parseInt(x,16)); return '#'+pa.map((v,i)=>Math.round(v+(pb[i]-v)*t).toString(16).padStart(2,'0')).join(''); }
+function divColor(r){ const neutral=css('--surface-2'), pos=css('--s1'), neg=css('--s2'); if(r==null) return neutral; const t=Math.min(1,Math.abs(r)); const steps=5; const q=Math.ceil(t*steps)/steps; return hexLerp(neutral, r>=0?pos:neg, Math.max(0.12,q)); }
+function corrMatrix(el, {labels, values, pvals, shortLabels}){
+  const n=labels.length, W=Math.max(320, el.clientWidth), labelW=150, top=110; const cs=Math.max(14, Math.min(30, (W-labelW-8)/n)); const H=top+n*cs+8;
+  const svg=s('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H}); const tip=tooltip(el);
+  labels.forEach((l,j)=>{ const x=labelW+j*cs+cs/2; svg.append(s('text',{x:x,y:top-6,'font-size':10,fill:css('--ink-2'),transform:`rotate(-55 ${x} ${top-6})`},shortLabels?shortLabels[j]:l)); });
+  labels.forEach((l,i)=>{ svg.append(s('text',{x:labelW-6,y:top+i*cs+cs/2+4,'text-anchor':'end','font-size':10,fill:css('--ink-2')},l));
+    labels.forEach((l2,j)=>{ const r=values[i][j], pv=pvals?pvals[i][j]:null; const rect=s('rect',{x:labelW+j*cs+1,y:top+i*cs+1,width:cs-2,height:cs-2,rx:2,fill:i===j?css('--grid'):divColor(r)});
+      rect.addEventListener('mousemove',ev=>{ const rb=svg.getBoundingClientRect(); tip.show(`<b>${l}</b> × <b>${l2}</b><br>Spearman r = <b>${r==null?'–':fmt(r,3)}</b>${pv!=null?'<br>p = '+fmtP(pv):''}`,(labelW+j*cs+cs/2)*(rb.width/W),ev.clientY-rb.top); }); rect.addEventListener('mouseleave',()=>tip.hide()); svg.append(rect);
+      if (cs>=22 && i!==j && r!=null && Math.abs(r)>=0.1) svg.append(s('text',{x:labelW+j*cs+cs/2,y:top+i*cs+cs/2+3.5,'text-anchor':'middle','font-size':9,fill:css('--ink'),'pointer-events':'none'},(r>0?'':'−')+Math.abs(r).toFixed(2).slice(1))); }); });
+  el.append(svg);
+}
+const fmtP = p => p==null ? '–' : (p<0.001 ? '< 0.001' : fmt(p,3));
+const sigSpan = p => h('span',{class:p!=null&&p<0.05?'stat-sig':'stat-ns'}, fmtP(p)+(p!=null&&p<0.05?' *':''));
+/* straight-line corridor diagram ------------------------------------ */
+function stripChart(el, {pts, metric, metricLabel}){
+  const W=Math.max(320, el.clientWidth), padL=46, padR=12, topH=170, bandH=16, H=topH+2*bandH+70;
+  const mpMax=COR_MP_MAX, iw=W-padL-padR, xs=mp=>padL+(mp/mpMax)*iw;
+  const bins={}; pts.forEach(p=>{ if(p.mp==null||p.dir==='X') return; const b=Math.floor(p.mp*2)/2; bins[b]=bins[b]||{E:0,W:0}; bins[b][p.dir]++; });
+  const mx=Math.max(1,...Object.values(bins).flatMap(b=>[b.E,b.W]));
+  const mid=topH/2+8, ys=v=>(v/mx)*(topH/2-14);
+  const svg=s('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H}); const tip=tooltip(el);
+  const ticks=niceTicks(0,mx,3).filter(t=>t<=mx);
+  ticks.forEach(t=>{ [mid-ys(t), mid+ys(t)].forEach((y,q)=>{ if(t===0&&q===1) return; svg.append(s('line',{x1:padL,x2:W-padR,y1:y,y2:y,stroke:css('--grid')})); svg.append(s('text',{x:padL-6,y:y+4,'text-anchor':'end','font-size':10,fill:css('--muted')},fmt(t))); }); });
+  svg.append(s('text',{x:padL+4,y:18,'font-size':10,fill:css('--ink-2'),'font-weight':600},'EB crashes ▲')); svg.append(s('text',{x:padL+4,y:topH+6,'font-size':10,fill:css('--ink-2'),'font-weight':600},'WB crashes ▼'));
+  Object.entries(bins).forEach(([b,v])=>{ const x=xs(+b)+1, w=Math.max(1,xs(+b+0.5)-xs(+b)-2);
+    if(v.E) svg.append(s('rect',{x,y:mid-ys(v.E),width:w,height:ys(v.E),fill:css('--s1'),rx:2})); if(v.W) svg.append(s('rect',{x,y:mid+1,width:w,height:ys(v.W),fill:css('--s2'),rx:2}));
+    const hit=s('rect',{x,y:8,width:w,height:topH,fill:'transparent'}); hit.addEventListener('mousemove',ev=>{ const rb=svg.getBoundingClientRect(); tip.show(`<b>MP ${b} to ${(+b+0.5).toFixed(1)}</b><br>EB: <b>${v.E}</b> · WB: <b>${v.W}</b> crashes`,(x+w/2)*(rb.width/W),ev.clientY-rb.top); }); hit.addEventListener('mouseleave',()=>tip.hide()); svg.append(hit); });
+  svg.append(s('line',{x1:padL,x2:W-padR,y1:mid,y2:mid,stroke:css('--axis')}));
+  // INRIX bands
+  if (hasIX){ const vals=IX.tmcs.map(t=>segMetric(t,metric)); const lo=Math.min(...vals), hi=Math.max(...vals);
+    ['E','W'].forEach((d,row)=>{ const y=topH+14+row*(bandH+4); let acc=0; svg.append(s('text',{x:padL-6,y:y+bandH-4,'text-anchor':'end','font-size':10,fill:css('--ink-2')},d+'B'));
+      const segs=IX.tmcs.filter(t=>t.dir===d).sort((a,b)=>a.order-b.order); const total=segs.reduce((a,t)=>a+t.miles,0); const scale=mpMax/total;
+      segs.forEach(t=>{ let m0=acc*scale, m1=(acc+t.miles)*scale; acc+=t.miles; if(d==='W'){ const a=mpMax-m1, b=mpMax-m0; m0=a; m1=b; }
+        const v=segMetric(t,metric); const rect=s('rect',{x:xs(m0)+0.5,y,width:Math.max(1,xs(m1)-xs(m0)-1),height:bandH,fill:rampColor(v,lo,hi,metric==='speed_mean')});
+        rect.addEventListener('mousemove',ev=>{ const rb=svg.getBoundingClientRect(); tip.show(`<b>${d}B ${t.name}</b><br>${metricLabel}: <b>${segFmt(metric,v)}</b><br>Mean ${t.speed_mean} mph · below 50 mph ${pct(t.p_lt50,1)} · episodes as worst segment ${fmt((IX.worst_tmc_counts||{})[t.tmc]||0)}`,(ev.clientX-rb.left),ev.clientY-rb.top); }); rect.addEventListener('mouseleave',()=>tip.hide()); svg.append(rect); }); }); }
+  // interchanges + zones
+  const yAx=topH+14+2*(bandH+4)+6;
+  svg.append(s('line',{x1:padL,x2:W-padR,y1:yAx,y2:yAx,stroke:css('--axis')}));
+  COR.interchanges.forEach((x,i)=>{ const px=xs(x.mp); svg.append(s('line',{x1:px,x2:px,y1:yAx,y2:yAx+5,stroke:css('--axis')})); const lab=x.mp===0?'PA line':x.label.startsWith('Exit')?x.label.split(' - ')[0]:x.label.split(' ')[0]; svg.append(s('text',{x:px,y:yAx+16,'text-anchor':i===0?'start':i===COR.interchanges.length-1?'end':'middle','font-size':9.5,fill:css('--muted')},lab+' · MP '+x.mp)); });
+  COR.zones.forEach((z,i)=>{ const x0=xs(z.mp_start), x1=xs(z.mp_end); svg.append(s('rect',{x:x0,y:yAx+22,width:Math.max(1,x1-x0-1),height:8,fill:css(ZONE_VARS[i%ZONE_VARS.length]),opacity:.75,rx:2})); if(x1-x0>22) svg.append(s('text',{x:(x0+x1)/2,y:yAx+40,'text-anchor':'middle','font-size':9,fill:css('--muted')},z.id)); });
+  el.append(svg);
+}
+const ZONE_VARS=['--s1','--s2','--s3','--s4','--s5','--s6','--s7','--s8'];
+const SEQ=['--seq1','--seq2','--seq3','--seq4','--seq5'];
+function rampColor(v,lo,hi,reverse){ if(v==null) return css('--grid'); let t=hi>lo?(v-lo)/(hi-lo):0; if(reverse) t=1-t; return css(SEQ[Math.min(4,Math.floor(t*4.999))]); }
+function segMetric(t,m){ return m==='episodes' ? ((IX.worst_tmc_counts||{})[t.tmc]||0) : t[m]; }
+function segFmt(m,v){ return m==='speed_mean'? fmt(v,1)+' mph' : m==='episodes'? fmt(v)+' episodes' : pct(v,1); }
+// milepost → position along the configured centerline (haversine-scaled)
+const COR_MP_MAX = Math.max(...COR.interchanges.map(x=>x.mp));
+const COR_CUM = (()=>{ const pts=COR.centerline; const d=[0]; const R=3958.8, rad=x=>x*Math.PI/180; for(let i=1;i<pts.length;i++){ const [a,b]=pts[i-1],[c,e]=pts[i]; const dl=rad(c-a), dn=rad(e-b); const h2=Math.sin(dl/2)**2+Math.cos(rad(a))*Math.cos(rad(c))*Math.sin(dn/2)**2; d.push(d[i-1]+2*R*Math.asin(Math.sqrt(h2))); } const tot=d[d.length-1]||1; return d.map(x=>x/tot*COR_MP_MAX); })();
+function mpToLatLng(mp){ const pts=COR.centerline; mp=Math.max(0,Math.min(COR_MP_MAX,mp)); for(let i=1;i<pts.length;i++){ if(mp<=COR_CUM[i]){ const t=(mp-COR_CUM[i-1])/((COR_CUM[i]-COR_CUM[i-1])||1); return [pts[i-1][0]+(pts[i][0]-pts[i-1][0])*t, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*t]; } } return pts[pts.length-1]; }
+function mpPath(m0,m1,step=0.1){ const out=[mpToLatLng(m0)]; for(let m=Math.ceil(m0/step)*step; m<m1; m+=step) out.push(mpToLatLng(m)); out.push(mpToLatLng(m1)); return out; }
+
+/* ------------------------------------------------------------------ */
+/* Tabs                                                                */
+/* ------------------------------------------------------------------ */
+function activateTab(name){
+  $$('#tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.tab===name?'true':'false'));
+  $$('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel-'+name));
+  try{ localStorage.setItem('i78-tab',name);}catch(e){}
+  if (name==='map') setTimeout(()=>{ if (MAPVIEW.v==='inrix' && INRIX_MAP_SRC) ensureInrixFrame(); else if (window._map) window._map.invalidateSize(); else initMap(); }, 50);
+  setTimeout(rerenderAll, 0);
+}
+$$('#tabs button').forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tab)));
+function activateSub(name){
+  $$('#data-subtabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.sub===name?'true':'false'));
+  $$('#panel-data .subpanel').forEach(p=>p.classList.toggle('active', p.id==='sub-'+name));
+  setTimeout(rerenderAll, 0);
+}
+$$('#data-subtabs button').forEach(b=>b.addEventListener('click',()=>activateSub(b.dataset.sub)));
+
+/* ------------------------------------------------------------------ */
+/* Header                                                              */
+/* ------------------------------------------------------------------ */
+(function(){
+  const parts=[COR.name, 'built '+DATA.meta.generated];
+  if (hasC) parts.push('climate '+C.period.start+' to '+C.period.end);
+  if (hasCR) parts.push(fmt(ST.n)+' I-78 crashes '+ST.years[0]+'-'+ST.years[ST.years.length-1]);
+  if (hasIX) parts.push('INRIX '+IX.period.start+' to '+IX.period.end);
+  $('#subtitle').textContent = parts.join(' · ');
+  const chips=$('#status-chips');
+  const st=(k,label)=>{ const d=DATA[k]; const ok=d&&d.status==='loaded'; const part=d&&d.status==='found_unparsed';
+    chips.append(h('button',{type:'button',class:'chip',title:'Show files and statistics for this dataset',onclick:()=>showDataset(k,label)}, h('i',{class:'dot '+(ok?'good':part?'warn':'neutral')}), label+': '+(ok?'loaded':part?'folder found, parser pending':'awaiting data'), h('span',{class:'more'},'▸'))); };
+  st('climate','Climate'); st('inrix','INRIX travel times'); st('crashes','NJ crashes'); st('workzones','Work zones');
+})();
+
+/* ------------------------------------------------------------------ */
+/* Dataset detail modal (opened from the header chips)                 */
+/* ------------------------------------------------------------------ */
+const DS_TILE = (v,l,n) => h('div',{class:'card stat'}, h('div',{class:'v'},v), h('div',{class:'l'},l), n?h('div',{class:'n'},n):null);
+function kv(pairs){ const g=h('div',{class:'kv'}); pairs.forEach(([k,v])=>{ if(v===null||v===undefined||v==='') return; g.append(h('b',{},k), h('span',{}, v.nodeType?v:String(v))); }); return g; }
+function filesTable(files){
+  if (!files || !files.length) return h('p',{class:'muted'},'No files listed.');
+  const tot=files.reduce((a,f)=>a+(f.size_mb||0),0);
+  const t=buildTable({columns:['File','Size (MB)','Rows','Columns'], rows:files.map(f=>[h('code',{},f.name), fmt(f.size_mb,2), (f.rows===null||f.rows===undefined)?h('span',{class:'muted'},'not counted (large file)'):fmt(f.rows), (f.cols===null||f.cols===undefined)?'–':fmt(f.cols)]), numeric:[0,1,1,1]});
+  return h('div',{}, t, h('p',{class:'muted',style:'margin:6px 0 0'}, `${files.length} file${files.length===1?'':'s'}, ${fmt(tot,1)} MB on disk. Row counts are raw line counts excluding the header.`));
+}
+function dsClimate(){
+  const P=C.period, ri=C.run_info||{};
+  const nets={}; C.stations.forEach(s=>{ nets[s.network]=(nets[s.network]||0)+1; });
+  const inComp=C.stations.filter(s=>s.composite&&(s.composite.PRCP||s.composite.SNOW||s.composite.TMAX)).length;
+  const body=h('div',{});
+  body.append(kv([['Source',C.source],['Folder',h('code',{},C.folder)],['Pulled',ri.run_date?`${ri.run_date} (backend ${ri.backend||'–'})`:null],['Elements',(ri.datatypes||[]).join(', ')||null],['Station search',ri.buffer_miles?`${ri.buffer_miles} mi buffer around the corridor, minimum coverage ${pct(ri.min_coverage)}`:null],['Period',`${P.start} to ${P.end} (${fmt(P.days)} days, ${P.years} years)`]]));
+  body.append(h('h4',{},'Key statistics'));
+  body.append(h('div',{class:'grid g4'},
+    DS_TILE(fmt(C.stations.length),'Stations within buffer',`${inComp} used in the composite; ${Object.entries(nets).map(([k,v])=>`${v} ${k}`).join(', ')}`),
+    DS_TILE(fmt(P.days),'Composite days','one row per day with area mean and station max'),
+    DS_TILE(fmt(P.per_year_adverse,0)+' /yr','Adverse-weather days','any wet, heavy rain, freezing or snow class'),
+    DS_TILE(fmt(P.per_year_freeze,0)+' /yr','Nights at or below 32 °F',`${fmt(P.per_year_freeze_thaw,0)} freeze-thaw days per year`),
+    DS_TILE(fmt(P.prcp_total,0)+' in','Total precipitation (area mean)',`${fmt(P.prcp_total/P.years,1)} in per year`),
+    DS_TILE(fmt(P.snow_total,0)+' in','Total snowfall (station max)',`${fmt(P.snow_total/P.years,1)} in per year`)));
+  body.append(h('h4',{},'Days by weather class'));
+  body.append(buildTable({columns:['Class','Rule','Days','Per year','Share'], rows:C.classes.map(c=>[c.label.split(' (')[0], c.label.includes('(')?c.label.slice(c.label.indexOf('(')+1,-1):'–', fmt(P.days_in_class[c.key]), fmt(P.per_year[c.key],1), pct(P.days_in_class[c.key]/P.days,1)]), numeric:[0,0,1,1,1]}));
+  body.append(h('h4',{},'Annual summary'));
+  body.append(buildTable({columns:['Year','Days','Precip (in)','Snow (in)','Max daily precip','Max daily snow','Freeze nights','Adverse days','Tmax high','Tmin low'], rows:C.annual.map(a=>[a.year,fmt(a.days),fmt(a.prcp_total,1),fmt(a.snow_total,1),fmt(a.max_daily_prcp,2),fmt(a.max_daily_snow,1),fmt(a.freeze_days),fmt(a.adverse_days),fmt(a.tmax_max)+' °F',fmt(a.tmin_min)+' °F']), numeric:[0,1,1,1,1,1,1,1,1,1]}));
+  body.append(h('h4',{},'Files'), filesTable(C.files));
+  body.append(h('h4',{},'Known gaps'), h('ul',{class:'tight'}, C.gaps.map(x=>h('li',{},x))));
+  return body;
+}
+function dsCrashes(){
+  const body=h('div',{});
+  body.append(kv([['Source','NJDOT crash tables (Crash, Vehicle, Unit); the person-level table is not read'],['Folder',h('code',{},CR.folder)],['Municipalities in extract',(CR.municipalities||[]).join('; ')||null],['Years',ST.years[0]+' to '+ST.years[ST.years.length-1]+' ('+ST.nyears+' years)'],['Mainline coverage',`MP ${ST.mp_lo} to ${ST.mp_hi} (${ST.section_len} mi)`]]));
+  body.append(h('h4',{},'Key statistics'));
+  body.append(h('div',{class:'grid g4'},
+    DS_TILE(fmt(ST.n),'I-78 mainline crashes',`of ${fmt(ST.n_extract)} rows in the extract (ramps and crossroads excluded)`),
+    DS_TILE(fmt(ST.injury_crashes),'Injury crashes',`${fmt(ST.injuries)} people injured, ${fmt(ST.fatalities)} killed; ${fmt(ST.ka)} K or A crashes`),
+    DS_TILE(pct(ST.adverse_share),'Adverse surface or weather',`${fmt(ST.adverse_n)} crashes; ${fmt(ST.wet_n)} wet, ${fmt(ST.snow_ice_n)} snow/ice/slush, ${fmt(ST.fog_n)} fog`),
+    DS_TILE(fmt(ST.adverse_inj_per_mi_yr,2),'Adverse injuries per mi per yr',`all-condition rate ${fmt(ST.all_inj_per_mi_yr,2)}; CDOT weather screen is above 2`),
+    DS_TILE(pct(ST.truck_share),'Truck-involved',`${fmt(ST.truck_n)} crashes`),
+    DS_TILE(pct(ST.same_dir_share),'Same direction (rear-end, sideswipe)','queue and speed-differential crash types'),
+    DS_TILE(fmt(ST.workzone_n),'In a construction zone','interim proxy for work-zone exposure'),
+    DS_TILE(fmt(ST.secondary_n),'Plausibly secondary',`${pct(ST.secondary_share,1)} of crashes; heuristic, see caveats`),
+    DS_TILE(fmt(ST.dark_n),'In darkness','dark, lit or unlit'),
+    DS_TILE(fmt(ST.f_speed_n)+' / '+fmt(ST.f_follow_n),'Speed-related / following too close','apparent contributing circumstances'),
+    DS_TILE(fmt(CR.points.length),'Geocoded points on the map','rows with valid coordinates inside the corridor box')));
+  body.append(h('h4',{},'By year'));
+  body.append(buildTable({columns:['Year','Crashes','K','A','B','C','O','Injuries','Fatalities','Adverse','Adverse w/ injury','Truck','Work zone','Secondary','Same direction'], rows:CR.by_year.map(y=>[y.year,fmt(y.total),y.K,y.A,y.B,y.C,y.O,fmt(y.injuries),y.fatalities,fmt(y.adverse),fmt(y.adverse_injury),fmt(y.truck),y.workzone,y.secondary,fmt(y.same_dir)]), numeric:[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}));
+  body.append(h('h4',{},'Severity (KABCO)'));
+  body.append(buildTable({columns:['Severity','Crashes','Share'], rows:CR.by_sev.map(r=>[SEV_LABEL[r.k]||r.k, fmt(r.n), pct(r.n/ST.n,1)]), numeric:[0,1,1]}));
+  body.append(h('h4',{},'Files'), filesTable(CR.files));
+  body.append(h('h4',{},'Caveats'), h('ul',{class:'tight'}, CR.caveats.map(x=>h('li',{},x))));
+  return body;
+}
+function dsInrix(){
+  const es=IX.event_stats||{}, th=IX.thresholds||{}, P=IX.period||{};
+  const body=h('div',{});
+  const tmcE=IX.tmcs.filter(t=>t.dir==='E'), tmcW=IX.tmcs.filter(t=>t.dir==='W');
+  const meanConf=IX.tmcs.reduce((a,t)=>a+(t.p_conf30||0),0)/IX.tmcs.length;
+  const E=es.E||{}, W=es.W||{};
+  body.append(kv([['Source',IX.source],['Folder',h('code',{},IX.folder)],['Period',`${P.start} to ${P.end}`],['Segments',`${IX.tmcs.length} TMCs (${tmcE.length} EB, ${tmcW.length} WB)`],['Extent',`EB ${IX.dir_miles.E} mi, free-flow ${IX.ff_tt_min.E} min; WB ${IX.dir_miles.W} mi, free-flow ${IX.ff_tt_min.W} min`],['Thresholds',`corridor "slow" below ${th.slow_mph} mph; segment "very slow" below ${th.very_slow_mph} mph; episode = ${th.event_min_minutes} min or more with any segment very slow`],['Derived file',h('code',{},'dashboard/data/inrix_summary.json')],['Intermediate',h('code',{},'dashboard/data/inrix_corridor_5min.csv (git-ignored)')]]));
+  body.append(h('h4',{},'Key statistics'));
+  body.append(h('div',{class:'grid g4'},
+    DS_TILE(fmt(IX.rows_parsed),'Segment records parsed','5-minute rows across all TMCs'),
+    DS_TILE(fmt(P.bins),'Corridor 5-min bins','per direction, with at least 80% of mileage reporting'),
+    DS_TILE(fmt(IX.daily.length),'Direction-days','daily corridor speed and travel time'),
+    DS_TILE(pct(meanConf,1),'Records at confidence 30','INRIX real-time, not historical fill (mean over TMCs)'),
+    DS_TILE(fmt(E.n)+' / '+fmt(W.n),'Slowdown episodes EB / WB',`${fmt(E.n_per_year,0)} / ${fmt(W.n_per_year,0)} per year`),
+    DS_TILE(fmt(E.median_dur_min)+' / '+fmt(W.median_dur_min)+' min','Median episode duration EB / WB',`mean ${fmt(E.mean_dur_min,0)} / ${fmt(W.mean_dur_min,0)} min`),
+    DS_TILE(fmt(avgMonthly('tti'),2),'Mean monthly travel-time index',`planning-time index ${fmt(avgMonthly('pti'),2)}`),
+    DS_TILE(fmt((E.total_excess_veh_min_per_vph||0)+(W.total_excess_veh_min_per_vph||0),0),'Excess veh-min per veh/h, all episodes','multiply by hourly volume for vehicle-minutes of delay')));
+  body.append(h('h4',{},'Segments (TMCs)'));
+  body.append(buildTable({columns:['TMC','Dir','Segment','Miles','Ref speed','Records','Mean speed','Share < 50 mph','Share < 35 mph','Conf 30'], rows:IX.tmcs.map(t=>[h('code',{},t.tmc),t.dir==='E'?'EB':'WB',t.name,fmt(t.miles,2),fmt(t.ref_speed),fmt(t.n),fmt(t.speed_mean,1),pct(t.p_lt50,1),pct(t.p_lt35,2),pct(t.p_conf30,1)]), numeric:[0,0,0,1,1,1,1,1,1,1]}));
+  body.append(h('h4',{},'Files'), filesTable(IX.file_manifest));
+  return body;
+}
+function dsMissing(d,label){
+  const body=h('div',{});
+  body.append(kv([['Status',d.status==='found_unparsed'?'folder found, parser pending':'awaiting data'],['Expected folder',h('code',{},d.expected_folder||d.folder||'–')],['Expected content',d.expected||null],['Found',d.folder?h('code',{},d.folder):null],['Note',d.note||null]]));
+  if (d.files && d.files.length) body.append(h('h4',{},'Files found'), filesTable(d.files));
+  if (label==='Work zones') body.append(h('h4',{},'What loads once the data lands'), h('ul',{class:'tight'},
+    h('li',{},'Work-zone hours by zone, direction and lane configuration, overlapped with INRIX speeds for the queue scenario.'),
+    h('li',{},'Crashes inside active closures versus the "Construction Zone" proxy ('+(hasCR?fmt(ST.workzone_n)+' crashes':'n/a')+').'),
+    h('li',{},'Exposure weighting for the work-zone VSL impact in Tab 5.')));
+  return body;
+}
+function showDataset(k,label){
+  const d=DATA[k]; const modal=$('#ds-modal'), bodyEl=$('#ds-modal-body'); bodyEl.innerHTML='';
+  const ok=d&&d.status==='loaded', part=d&&d.status==='found_unparsed';
+  bodyEl.append(h('h2',{id:'ds-modal-title'}, label+' ', h('span',{class:'badge '+(ok?'good':part?'warn':'')}, ok?'loaded':part?'folder found, parser pending':'awaiting data')));
+  let content;
+  if (!ok) content=dsMissing(d||{},label);
+  else if (k==='climate') content=dsClimate();
+  else if (k==='crashes') content=dsCrashes();
+  else if (k==='inrix') content=dsInrix();
+  else content=dsMissing(d,label);
+  bodyEl.append(content);
+  bodyEl.append(h('p',{class:'muted',style:'margin-top:14px'}, `Built ${DATA.meta.generated} by ${DATA.meta.builder}. Re-run the builder after adding files to refresh these figures.`));
+  modal.classList.add('open'); document.body.style.overflow='hidden'; $('#ds-modal-close').focus();
+}
+function closeDataset(){ $('#ds-modal').classList.remove('open'); document.body.style.overflow=''; }
+$('#ds-modal-close').addEventListener('click', closeDataset);
+$('#ds-modal').addEventListener('click', e=>{ if(e.target.id==='ds-modal') closeDataset(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $('#ds-modal').classList.contains('open')) closeDataset(); });
+
+function tile(v,l,n){ return h('div',{class:'card stat'}, h('div',{class:'v'},v), h('div',{class:'l'},l), n?h('div',{class:'n'},n):null); }
+function awaitingCard(parent, title, d, planned){
+  const card=h('div',{class:'card await'});
+  card.append(h('h3',{}, title, h('span',{class:'badge '+(d.status==='found_unparsed'?'warn':'')}, d.status==='found_unparsed'?'folder found, parser pending':'awaiting data')));
+  if (d.expected_folder) card.append(h('p',{}, h('b',{},'Drop files in: '), h('code',{}, d.expected_folder)));
+  if (d.expected) card.append(h('p',{}, h('b',{},'Expected content: '), d.expected));
+  if (d.folder) card.append(h('p',{}, 'Found: ', h('code',{}, d.folder), ' — ', d.note||''));
+  if (planned){ card.append(h('h4',{},'Planned analyses once loaded')); card.append(h('ul',{class:'tight'}, planned.map(p=>h('li',{},p)))); }
+  parent.append(card); return card;
+}
+
+/* ------------------------------------------------------------------ */
+/* TAB 1a: overview                                                    */
+/* ------------------------------------------------------------------ */
+(function(){
+  const root=$('#sub-overview');
+  root.append(h('h2',{},'What the data says so far'));
+  const tiles=h('div',{class:'grid g4'});
+  if (hasCR){
+    tiles.append(tile(fmt(ST.n), 'I-78 mainline crashes, '+ST.nyears+' yr', `MP ${ST.mp_lo} to ${ST.mp_hi} (${ST.section_len} mi); ${fmt(ST.injury_crashes)} injury crashes, ${fmt(ST.fatalities)} fatalities`),
+      tile(pct(ST.adverse_share), 'Crashes in adverse surface / weather', `${fmt(ST.adverse_n)} crashes; ${fmt(ST.adverse_injury_crashes)} with injury`),
+      tile(fmt(ST.adverse_inj_per_mi_yr,1)+' /mi/yr', 'Injuries in adverse conditions', 'CDOT weather-based VSL screen: more than 2 per mile per year'),
+      tile(pct(ST.truck_share), 'Truck-involved crashes', `${fmt(ST.truck_n)} crashes with a truck or GVWR > 26,001 lb unit`));
+  }
+  if (hasIX){
+    const es=IX.event_stats||{}; const evy=(es.E?es.E.n_per_year:0)+(es.W?es.W.n_per_year:0);
+    const wkE=(IX.hourly_profile||[]).filter(r=>r.dir==='E'&&r.daytype==='weekday').map(r=>r.speed); const minE=wkE.length?Math.min(...wkE):null;
+    tiles.append(tile(fmt(evy,0)+' /yr', 'Slowdown episodes (any segment < 35 mph, 15 min+)', `EB ${es.E?fmt(es.E.n_per_year,0):'–'}, WB ${es.W?fmt(es.W.n_per_year,0):'–'}; median ${es.E?fmt(es.E.median_dur_min):'–'} / ${es.W?fmt(es.W.median_dur_min):'–'} min`),
+      tile(minE!==null?fmt(minE,0)+' mph':'–', 'Slowest weekday hour, EB corridor mean', 'no recurring peak-period congestion; flow-based VSL not supported'));
+  }
+  if (hasC){
+    tiles.append(tile(fmt(C.period.per_year_adverse,0)+' days/yr', 'Adverse-weather days', `${fmt(py.wet+py.heavy,0)} wet, ${fmt(py.snow_lt+py.snow_sig+py.snow_maj,0)} snow, ${fmt(py.freezing,0)} freezing-precip`),
+      tile(fmt(C.period.per_year_freeze,0)+' days/yr', 'Nights at or below 32 °F', `${fmt(C.period.per_year_freeze_thaw,0)} freeze-thaw days`));
+  }
+  root.append(tiles);
+
+  // headline findings
+  const f=h('div',{class:'card',style:'margin-top:14px'}, h('h3',{},'Headline findings for the concept of operations'));
+  const items=[];
+  if (hasCR) items.push(h('div',{class:'finding'}, h('b',{},'Safety screen passes for a weather-based VSL. '), `Injuries in adverse surface or weather conditions run ${fmt(ST.adverse_inj_per_mi_yr,1)} per mile per year on the ${ST.section_len}-mile crash section, above the CDOT threshold of 2. Adverse-condition crashes are ${pct(ST.adverse_share)} of all mainline crashes (${fmt(ST.wet_n)} wet, ${fmt(ST.snow_ice_n)} snow/ice/slush, ${fmt(ST.fog_n)} fog).`));
+  if (hasIX) items.push(h('div',{class:'finding'}, h('b',{},'No recurring congestion, so the flow-based component is not justified. '), `Weekday corridor mean speeds stay between 65 and 69 mph in every hour; the travel-time index averages ${fmt(avgMonthly('tti'),2)} and the planning-time index ${fmt(avgMonthly('pti'),2)}. Delay is episodic: about ${fmt(((IX.event_stats.E||{}).n_per_year||0)+((IX.event_stats.W||{}).n_per_year||0),0)} slowdown episodes a year, so the queue and incident scenario carries the travel-time case.`));
+  if (hasIX && hasC && X.speed_by_cls) { const e=X.speed_by_cls.filter(r=>r.dir==='E'); const dry=e.find(r=>r.cls===0), wet=e.find(r=>r.cls===1), sn=e.find(r=>r.cls===5), maj=e.find(r=>r.cls===6);
+    items.push(h('div',{class:'finding'}, h('b',{},'Drivers do not slow down on their own. '), `Eastbound daily mean speed is ${fmt(dry.speed,1)} mph on dry days, ${fmt(wet.speed,1)} on wet days and ${fmt(sn.speed,1)} on days with 1 to 3 in of snow; only major-snow days (${fmt(maj.speed,1)} mph) show a real reduction. This is the core evidence that a regulatory, weather-responsive limit is needed rather than advisory messaging.`)); }
+  if (hasCR) { const wbDown=(CR.grade_dir.find(r=>r.grade==='Down Hill'&&r.dir==='W')||{}).n, ebDown=(CR.grade_dir.find(r=>r.grade==='Down Hill'&&r.dir==='E')||{}).n;
+    items.push(h('div',{class:'finding'}, h('b',{},'Trucks and the Jugtown grades shape the scenarios. '), `${pct(ST.truck_share)} of crashes involve a truck; ${fmt(wbDown)} crashes are coded on a westbound downgrade versus ${fmt(ebDown)} eastbound, so the westbound descent toward Bloomsbury is the priority zone for grade-adjusted limits. Same-direction rear-end and sideswipe crashes are ${pct(ST.same_dir_share)} of the total, ${fmt(ST.workzone_n)} crashes occurred in a construction zone, and ${fmt(ST.secondary_n)} are plausibly secondary crashes.`)); }
+  if (S && S.rate_ratios && S.models && S.models.all){ const rr=S.rate_ratios.all.rows, sig=rr.filter(r=>r.cls>0&&r.rr_lo!=null&&r.rr_lo>1); const g=S.models.all.terms.filter(t=>t.term.startsWith('Weather:')&&t.p<0.05);
+    items.push(h('div',{class:'finding'}, h('b',{},'The weather effect is statistically real, and it is concentrated in heavy rain and snow. '), `Crashes are not spread across weather classes in proportion to days (chi-square p = ${fmtP(S.rate_ratios.all.chi2_p)}). ${sig.length?sig.map(r=>`${CLS_SHORT[r.cls]} days carry ${fmt(r.rr,2)}× the dry-day crash rate (95% CI ${fmt(r.rr_lo,2)} to ${fmt(r.rr_hi,2)})`).join('; ')+'.':'No single class is individually significant.'} After controlling for weekday, month and year, ${g.length?g.map(t=>`${t.term.replace('Weather: ','').toLowerCase()} stays at ${fmt(t.rr,2)}× (p = ${fmtP(t.p)})`).join(' and ')+'.':'no class remains significant.'} Speeds on those days are only ${fmt(Math.abs((S.speed_tests&&S.speed_tests.E.rows.find(r=>r.cls===2)||{}).diff_median||0),1)} to ${fmt(Math.abs((S.speed_tests&&S.speed_tests.E.rows.find(r=>r.cls===6)||{}).diff_median||0),1)} mph lower than on dry days. Details in Tab 3.`)); f.append(...items); }
+  else f.append(...items);
+  root.append(f);
+
+  const ds=h('div',{class:'grid g3',style:'margin-top:14px'});
+  root.append(h('h2',{style:'margin-top:18px'},'Dataset status'));
+  if (hasC) ds.append(h('div',{class:'card'}, h('h3',{},'Climate ', h('span',{class:'badge good'},'loaded')), h('p',{}, `${C.source}. ${C.stations.length} stations, ${fmt(C.period.days)} days.`), h('h4',{},'Known gaps'), h('ul',{class:'tight'}, C.gaps.map(x=>h('li',{},x)))));
+  if (hasCR) ds.append(h('div',{class:'card'}, h('h3',{},'NJ crashes ', h('span',{class:'badge good'},'loaded')), h('p',{}, CR.source+'.'), h('h4',{},'Caveats'), h('ul',{class:'tight'}, CR.caveats.map(x=>h('li',{},x))))); else awaitingCard(ds,'NJ crash records',DATA.crashes,null);
+  if (hasIX) ds.append(h('div',{class:'card'}, h('h3',{},'INRIX travel times ', h('span',{class:'badge good'},'loaded')), h('p',{}, IX.source+'.'), h('p',{class:'muted'}, `EB ${IX.dir_miles.E} mi (free-flow ${IX.ff_tt_min.E} min), WB ${IX.dir_miles.W} mi (free-flow ${IX.ff_tt_min.W} min). Thresholds: corridor "slow" below ${IX.thresholds.slow_mph} mph, segment "very slow" below ${IX.thresholds.very_slow_mph} mph, episode = ${IX.thresholds.event_min_minutes} min or more.`))); else awaitingCard(ds,'INRIX travel times',DATA.inrix,null);
+  awaitingCard(ds,'Work zones',DATA.workzones,null);
+  root.append(ds);
+})();
+function avgMonthly(k){ if(!hasIX) return null; const m=IX.monthly.map(r=>r[k]).filter(v=>v!=null); return m.reduce((a,b)=>a+b,0)/m.length; }
+
+/* ------------------------------------------------------------------ */
+/* TAB 1b: crash data                                                  */
+/* ------------------------------------------------------------------ */
+(function(){
+  const root=$('#sub-crash');
+  root.append(h('h2',{},'Crash data'));
+  if (!hasCR){ awaitingCard(root,'NJDOT crash records',DATA.crashes,['Crash frequency by mile post, surface, weather, hour; injury-per-mile screen; truck and work-zone shares.']); return; }
+  const tiles=h('div',{class:'grid g4'});
+  tiles.append(tile(fmt(ST.n),'Mainline crashes',`of ${fmt(ST.n_extract)} rows in the extract (route 78 only)`),
+    tile(fmt(ST.injury_crashes),'Injury crashes (K+A+B+C)',`${ST.inj_crash_by_sev.K} fatal, ${ST.inj_crash_by_sev.A} serious, ${ST.inj_crash_by_sev.B} minor, ${ST.inj_crash_by_sev.C} possible`),
+    tile(fmt(ST.all_inj_per_mi_yr,1)+' /mi/yr','Injuries + fatalities, all conditions','CDOT flow-based screen: more than 3 (also needs > 1,000 vphpl)'),
+    tile(pct(ST.same_dir_share),'Rear-end + same-direction sideswipe','CDOT benchmark for high-speed / high-density operation: 89.5%'),
+    tile(fmt(ST.workzone_n),'Construction / maintenance zone crashes',`${pct(ST.workzone_n/ST.n)} of crashes; interim work-zone exposure proxy`),
+    tile(fmt(ST.secondary_n),'Plausible secondary crashes','same direction, within 2 h and 3 mi upstream of a prior crash'),
+    tile(fmt(ST.f_speed_n+ST.f_follow_n),'Unsafe speed or following too closely','contributing factor on a unit'),
+    tile(fmt(ST.dark_n),'Crashes in darkness',pct(ST.dark_n/ST.n)+' of crashes'));
+  root.append(tiles);
+  const g=h('div',{class:'grid g2',style:'margin-top:14px'});
+  chartCard(g,{title:'Crashes by year and severity', sub:'KABCO highest injury severity; 2024-25 show a rising count', legend:SEV.map(sv=>({name:SEV_LABEL[sv],var:SEV_VAR[sv]})),
+    render:el=>barChart(el,{categories:CR.by_year.map(r=>String(r.year)), stacked:true, series:SEV.map(sv=>({name:SEV_LABEL[sv],var:SEV_VAR[sv],values:CR.by_year.map(r=>r[sv])}))}),
+    table:{columns:['Year','Total','K','A','B','C','O','Injuries','Fatalities','Adverse','Adverse w/ injury','Truck','Work zone','Secondary'], rows:CR.by_year.map(r=>[r.year,r.total,r.K,r.A,r.B,r.C,r.O,r.injuries,r.fatalities,r.adverse,r.adverse_injury,r.truck,r.workzone,r.secondary]), numeric:[0,1,1,1,1,1,1,1,1,1,1,1,1,1]}});
+  chartCard(g,{title:'Crashes by month', sub:'All crashes versus crashes in adverse surface / weather', legend:[{name:'All crashes',var:'--s1'},{name:'Adverse conditions',var:'--s2'}],
+    render:el=>barChart(el,{categories:MONTHS, series:[{name:'All',var:'--s1',values:CR.by_month.map(r=>r.n)},{name:'Adverse',var:'--s2',values:CR.by_month.map(r=>r.adverse)}]}),
+    table:{columns:['Month','All','Adverse','Injury'], rows:CR.by_month.map(r=>[MONTHS[r.month-1],r.n,r.adverse,r.injury]), numeric:[0,1,1,1]}});
+  chartCard(g,{title:'Crashes by milepost and direction (0.5-mi bins)', sub:'Eastbound and westbound stacked; Jugtown Mountain is roughly MP 7 to 11', full:true, legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+    render:el=>barChart(el,{categories:CR.mp_bins.map(r=>r.mp.toFixed(1)), stacked:true, series:[{name:'EB',var:'--s1',values:CR.mp_bins.map(r=>r.E)},{name:'WB',var:'--s2',values:CR.mp_bins.map(r=>r.W)}]}),
+    table:{columns:['MP bin','EB','EB adverse','EB injury','EB truck','WB','WB adverse','WB injury','WB truck'], rows:CR.mp_bins.map(r=>[r.mp.toFixed(1),r.E,r.E_adv,r.E_inj,r.E_truck,r.W,r.W_adv,r.W_inj,r.W_truck]), numeric:[0,1,1,1,1,1,1,1,1]}});
+  chartCard(g,{title:'Adverse-condition crashes by milepost', sub:'Same bins, adverse surface / weather only', full:true, legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+    render:el=>barChart(el,{categories:CR.mp_bins.map(r=>r.mp.toFixed(1)), stacked:true, series:[{name:'EB adverse',var:'--s1',values:CR.mp_bins.map(r=>r.E_adv)},{name:'WB adverse',var:'--s2',values:CR.mp_bins.map(r=>r.W_adv)}]})});
+  const bf=(title,sub,rows,top)=>chartCard(g,{title,sub, legend:[{name:'No injury',var:'--o1'},{name:'Injury',var:'--o3'}],
+    render:el=>hbarChart(el,{categories:rows.slice(0,top).map(r=>r.k), series:[{name:'No injury',var:'--o1',values:rows.slice(0,top).map(r=>r.n-r.injury)},{name:'Injury',var:'--o3',values:rows.slice(0,top).map(r=>r.injury)}]}),
+    table:{columns:['Category','Crashes','Injury crashes','K+A','Truck-involved','Share'], rows:rows.map(r=>[r.k,r.n,r.injury,r.ka,r.truck,pct(r.n/ST.n,1)]), numeric:[0,1,1,1,1,1]}});
+  bf('Crashes by road surface condition','As coded on the crash report',CR.by_surface,8);
+  bf('Crashes by weather condition','As coded on the crash report',CR.by_weather,8);
+  bf('Crashes by type','Same-direction crashes dominate; fixed-object crashes are the run-off-road signal',CR.by_type,10);
+  bf('Crashes by light condition','',CR.by_light,8);
+  chartCard(g,{title:'Crashes by hour of day', sub:'All crashes and adverse-condition crashes', legend:[{name:'All crashes',var:'--s1'},{name:'Adverse conditions',var:'--s2'}],
+    render:el=>barChart(el,{categories:HOURS, labelEvery:2, series:[{name:'All',var:'--s1',values:CR.by_hour.map(r=>r.n)},{name:'Adverse',var:'--s2',values:CR.by_hour.map(r=>r.adverse)}]}),
+    table:{columns:['Hour','All','Adverse','Injury'], rows:CR.by_hour.map(r=>[r.hour,r.n,r.adverse,r.injury]), numeric:[1,1,1,1]}});
+  chartCard(g,{title:'Crashes by weekday and hour', sub:'Count of crashes 2021-25',
+    render:el=>heatmap(el,{rows:DOW, cols:HOURS, values:CR.hour_dow, colLabelEvery:2, fmtV:v=>v+' crashes'}),
+    table:{columns:['Day',...HOURS], rows:CR.hour_dow.map((r,i)=>[DOW[i],...r])}});
+  root.append(g);
+  const g2=h('div',{class:'grid g2',style:'margin-top:14px'});
+  const gd=['Level','Up Hill','Down Hill','Hill Crest'].map(gr=>{ const e=CR.grade_dir.find(r=>r.grade===gr&&r.dir==='E')||{n:0,adverse:0,truck:0,injury:0}; const w=CR.grade_dir.find(r=>r.grade===gr&&r.dir==='W')||{n:0,adverse:0,truck:0,injury:0}; return [gr,e.n,e.adverse,e.truck,e.injury,w.n,w.adverse,w.truck,w.injury]; });
+  g2.append(h('div',{class:'card'}, h('h3',{},'Grade by direction'), h('p',{class:'muted'},'"Down Hill" westbound is the Jugtown descent toward Bloomsbury; "Up Hill" eastbound is the climb from Exit 7.'), buildTable({columns:['Grade','EB','EB adverse','EB truck','EB injury','WB','WB adverse','WB truck','WB injury'], rows:gd, numeric:[0,1,1,1,1,1,1,1,1]})));
+  g2.append(h('div',{class:'card'}, h('h3',{},'Days with the most crashes'), h('p',{class:'muted'},'Multi-crash days flag pile-ups and secondary crashes; the weather class of the day comes from the climate pull.'), buildTable({columns:['Date','Crashes','Injury','Adverse-coded','Weather class'], rows:CR.top_days.map(r=>[r.date,r.n,r.injury,r.adverse,r.cls>=0?CLS_SHORT[r.cls]:'–']), numeric:[0,1,1,1,0]})));
+  root.append(g2);
+  root.append(h('div',{class:'card',style:'margin-top:14px'}, h('h3',{},'Caveats'), h('ul',{class:'tight'}, CR.caveats.map(x=>h('li',{},x)))));
+})();
+
+/* ------------------------------------------------------------------ */
+/* TAB 1c: INRIX                                                        */
+/* ------------------------------------------------------------------ */
+(function(){
+  const root=$('#sub-tt');
+  root.append(h('h2',{},'Travel times (INRIX)'));
+  if (!hasIX){ awaitingCard(root,'INRIX XD speeds',DATA.inrix,['Hourly speed profiles, TTI/PTI, slowdown episodes, delay per incident.']); return; }
+  const es=IX.event_stats||{};
+  const tiles=h('div',{class:'grid g4'});
+  tiles.append(tile(fmt(avgMonthly('tti'),2),'Travel-time index (mean)','mean travel time ÷ free-flow travel time, monthly average'),
+    tile(fmt(avgMonthly('pti'),2),'Planning-time index (95th pct)','95th percentile ÷ free-flow'),
+    tile(fmt(avgMonthly('h_lt50'),0)+' h/mo','Corridor mean below 50 mph','hours per month per direction'),
+    tile(fmt(avgMonthly('h_any_lt35'),0)+' h/mo','Any segment below 35 mph','hours per month per direction'),
+    tile(es.E?fmt(es.E.n_per_year,0):'–','EB slowdown episodes / yr',es.E?`median ${fmt(es.E.median_dur_min)} min, mean ${fmt(es.E.mean_dur_min)} min`:''),
+    tile(es.W?fmt(es.W.n_per_year,0):'–','WB slowdown episodes / yr',es.W?`median ${fmt(es.W.median_dur_min)} min, mean ${fmt(es.W.mean_dur_min)} min`:''),
+    tile(es.E?fmt(es.E.total_excess_veh_min_per_vph/es.E.n,1):'–','EB excess minutes per episode, per veh/h','× hourly volume ÷ 60 = vehicle-hours of delay per episode'),
+    tile(es.W?fmt(es.W.total_excess_veh_min_per_vph/es.W.n,1):'–','WB excess minutes per episode, per veh/h','same unit; multiply by volume once counts are loaded'));
+  root.append(tiles);
+  const g=h('div',{class:'grid g2',style:'margin-top:14px'});
+  const prof=(d,dt)=>IX.hourly_profile.filter(r=>r.dir===d&&r.daytype===dt).sort((a,b)=>a.hour-b.hour);
+  chartCard(g,{title:'Weekday corridor speed by hour', sub:'Mean corridor speed (length-weighted); flat profile = no recurring congestion', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+    render:el=>lineChart(el,{x:HOURS, series:[{name:'EB mph',var:'--s1',values:prof('E','weekday').map(r=>r.speed)},{name:'WB mph',var:'--s2',values:prof('W','weekday').map(r=>r.speed)}], yMin:50, yMax:75, xTicks:[0,4,8,12,16,20,23], yFmt:v=>fmt(v)+' mph'}),
+    table:{columns:['Hour','EB speed','EB TT mean','EB TT 95th','EB % any seg < 35','WB speed','WB TT mean','WB TT 95th','WB % any seg < 35'], rows:HOURS.map((hh,i)=>{ const e=prof('E','weekday')[i], w=prof('W','weekday')[i]; return [hh,e.speed,e.tt_mean,e.tt95,pct(e.p_any_lt35,1),w.speed,w.tt_mean,w.tt95,pct(w.p_any_lt35,1)]; }), numeric:[0,1,1,1,1,1,1,1,1]}});
+  chartCard(g,{title:'Share of 5-min bins with any segment below 35 mph, weekday', sub:'Queue / incident exposure by hour; the afternoon shows the most episodes', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+    render:el=>barChart(el,{categories:HOURS, labelEvery:2, yFmt:v=>pct(v,1), series:[{name:'EB',var:'--s1',values:prof('E','weekday').map(r=>r.p_any_lt35)},{name:'WB',var:'--s2',values:prof('W','weekday').map(r=>r.p_any_lt35)}]})});
+  const ym=[...new Set(IX.monthly.map(r=>r.ym))].sort(); const mo=(d,k)=>ym.map(m=>{ const r=IX.monthly.find(x=>x.dir===d&&x.ym===m); return r?r[k]:null; });
+  chartCard(g,{title:'Planning-time index by month', sub:'95th percentile travel time ÷ free-flow; spikes are storm months and major incidents', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+    render:el=>lineChart(el,{x:ym, series:[{name:'EB PTI',var:'--s1',values:mo('E','pti')},{name:'WB PTI',var:'--s2',values:mo('W','pti')}], yMin:1, xTicks:ym.map((m,i)=>m.endsWith('-01')?i:null).filter(v=>v!==null), xLabel:(i,f)=>f?ym[i]:ym[i].slice(0,4), yFmt:v=>fmt(v,2)}),
+    table:{columns:['Month','EB speed','EB TTI','EB PTI','EB h<50','EB h any<35','WB speed','WB TTI','WB PTI','WB h<50','WB h any<35'], rows:ym.map(m=>{ const e=IX.monthly.find(x=>x.dir==='E'&&x.ym===m)||{}, w=IX.monthly.find(x=>x.dir==='W'&&x.ym===m)||{}; return [m,e.speed,e.tti,e.pti,e.h_lt50,e.h_any_lt35,w.speed,w.tti,w.pti,w.h_lt50,w.h_any_lt35]; }), numeric:[0,1,1,1,1,1,1,1,1,1,1]}});
+  chartCard(g,{title:'Hours per month with any segment below 35 mph', sub:'Episode exposure by month and direction', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+    render:el=>barChart(el,{categories:ym, labelEvery:12, series:[{name:'EB',var:'--s1',values:mo('E','h_any_lt35')},{name:'WB',var:'--s2',values:mo('W','h_any_lt35')}]})});
+  // segment heat: tmc x month
+  const tm=[...IX.tmcs].sort((a,b)=>a.dir===b.dir?a.order-b.order:(a.dir<b.dir?-1:1));
+  const tmRows=tm.map(t=>`${t.dir}B ${t.name.replace(/CHARLESTOWN RD\/PERRYVILLE RD\//,'').replace('US-22/NJ-173/','')}`.slice(0,22));
+  const tmVals=tm.map(t=>ym.map(m=>{ const r=IX.tmc_ym.find(x=>x.tmc_code===t.tmc&&x.ym===m); return r?r.p_lt50:null; }));
+  chartCard(g,{title:'Segment share of time below 50 mph, by month', sub:'Rows are TMC segments in travel order (EB top to bottom = west to east; WB = east to west). Darker = slower.', full:true,
+    render:el=>heatmap(el,{rows:tmRows, cols:ym, values:tmVals, rowH:18, labelW:150, colLabelEvery:12, fmtV:v=>pct(v,1)+' of time below 50 mph'}),
+    table:{columns:['TMC','Dir','Segment','Miles','Ref speed','Mean speed','% < 50','% < 35','Confidence ≥ 30'], rows:tm.map(t=>[t.tmc,t.dir,t.name,t.miles,t.ref_speed,t.speed_mean,pct(t.p_lt50,2),pct(t.p_lt35,2),pct(t.p_conf30,1)]), numeric:[0,0,0,1,1,1,1,1,1]}});
+  root.append(g);
+  const ev=h('div',{class:'card',style:'margin-top:14px'}, h('h3',{},'Largest slowdown episodes'), h('p',{class:'muted'},'Ranked by excess travel time per unit flow (minutes per vehicle, integrated over the episode, per 1 veh/h). Multiply by the hourly volume and divide by 60 for vehicle-hours of delay. Match these to the crash and incident logs to attribute cause.'),
+    buildTable({columns:['Dir','Start','End','Duration (min)','Min segment speed','Max corridor TT (min)','Excess min per veh/h','Worst TMC'], rows:IX.events.slice(0,40).map(e=>[e.dir,e.start,e.end,e.dur_min,e.min_speed,e.max_tt,e.excess_veh_min_per_vph,e.worst_tmc]), numeric:[0,0,0,1,1,1,1,0]}));
+  root.append(ev);
+})();
+
+/* ------------------------------------------------------------------ */
+/* TAB 1d: climate readings                                            */
+/* ------------------------------------------------------------------ */
+(function(){
+  const root=$('#sub-climate'); if(!hasC){ root.append(h('div',{class:'card await'},h('h3',{},'No climate data loaded'))); return; }
+  const D=C.daily, P=C.period;
+  root.append(h('h2',{},'Climate readings, area composite'), h('p',{class:'muted'},`${P.years} calendar years (${P.start} to ${P.end}) from ${C.stations.length} NOAA GHCN-Daily stations within 8 miles. Area mean = average over stations with adequate coverage; max = highest single station that day (closest proxy for the worst point along the corridor).`));
+  const tiles=h('div',{class:'grid g4'});
+  tiles.append(tile(fmt(P.per_year_adverse,0)+' days/yr','Any adverse-weather day',`${fmt(100*P.per_year_adverse/365.25,0)}% of days`),
+    tile(fmt(py.wet+py.heavy,0)+' days/yr','Wet pavement (rain ≥ 0.10 in)',`${fmt(py.heavy,0)} with ≥ 1.0 in at a station`),
+    tile(fmt(py.snow_lt+py.snow_sig+py.snow_maj,0)+' days/yr','Snow days (≥ 0.1 in)',`${fmt(py.snow_sig+py.snow_maj,0)} with ≥ 1 in; ${fmt(py.snow_maj,0)} with ≥ 3 in`),
+    tile(fmt(py.freezing,0)+' days/yr','Freezing precipitation / black-ice risk','precip with Tmin ≤ 32 °F and little snow'));
+  root.append(tiles);
+  const g=h('div',{class:'grid g2',style:'margin-top:14px'});
+  chartCard(g,{title:'Weather-condition calendar', sub:'Every day colored by its condition class; the day-level footprint of a weather-based VSL', full:true, legend:CLS.map(c=>({name:CLS_SHORT[c.id],var:CLS_VAR[c.id]})),
+    render:el=>calendarStrip(el,D),
+    table:{columns:['Date','Class','Rain mean (in)','Rain max (in)','Snow max (in)','Snow depth (in)','Tmin °F','Tmax °F'], rows:D.date.map((d,i)=>D.cls[i]>0?[d,CLS_SHORT[D.cls[i]],fmt(D.prcp_mean[i],2),fmt(D.prcp_max[i],2),fmt(D.snow_max[i],1),fmt(D.snwd_max[i],1),fmt(D.tmin[i]),fmt(D.tmax[i])]:null).filter(Boolean), numeric:[0,0,1,1,1,1,1,1]}});
+  chartCard(g,{title:'Adverse-weather days by year', sub:'Each day assigned to its most severe class', legend:CLS.slice(1).map(c=>({name:CLS_SHORT[c.id],var:CLS_VAR[c.id]})),
+    render:el=>barChart(el,{categories:C.annual.map(a=>String(a.year)), stacked:true, series:CLS.slice(1).map(c=>({name:CLS_SHORT[c.id],var:CLS_VAR[c.id],values:C.annual.map(a=>a[c.key])}))}),
+    table:{columns:['Year',...CLS.slice(1).map(c=>CLS_SHORT[c.id]),'Total adverse','Freeze nights'], rows:C.annual.map(a=>[a.year,...CLS.slice(1).map(c=>a[c.key]),a.adverse_days,a.freeze_days]), numeric:[0,1,1,1,1,1,1,1,1]}});
+  chartCard(g,{title:'Average adverse days by month', sub:'Winter classes concentrate Dec to Mar; wet days are year-round', legend:CLS.slice(1).map(c=>({name:CLS_SHORT[c.id],var:CLS_VAR[c.id]})),
+    render:el=>barChart(el,{categories:MONTHS, stacked:true, yFmt:v=>fmt(v,1), series:CLS.slice(1).map(c=>({name:CLS_SHORT[c.id],var:CLS_VAR[c.id],values:C.monthly.map(m=>m[c.key])}))}),
+    table:{columns:['Month',...CLS.slice(1).map(c=>CLS_SHORT[c.id]),'Freeze nights','Mean Tmin °F'], rows:C.monthly.map(m=>[MONTHS[m.month-1],...CLS.slice(1).map(c=>fmt(m[c.key],1)),fmt(m.freeze_days,1),fmt(m.tmin_mean,1)]), numeric:[0,1,1,1,1,1,1,1,1]}});
+  const ymL=C.ym.map(r=>r.ym);
+  chartCard(g,{title:'Monthly precipitation (area mean, inches)', sub:'Liquid-equivalent total per month', render:el=>barChart(el,{categories:ymL, labelEvery:12, yFmt:v=>fmt(v,1), series:[{name:'Precipitation (in)',var:'--s1',values:C.ym.map(r=>r.prcp)}]}),
+    table:{columns:['Month','Precip (in)','Snow (in)','Wet days','Snow days','Freezing-precip days','Freeze nights'], rows:C.ym.map(r=>[r.ym,fmt(r.prcp,2),fmt(r.snow,1),r.wet_days,r.snow_days,r.freezing_days,r.freeze_days]), numeric:[0,1,1,1,1,1,1]}});
+  chartCard(g,{title:'Monthly snowfall (max station, inches)', sub:'Feb 2021 and Feb 2024 dominate', render:el=>barChart(el,{categories:ymL, labelEvery:12, yFmt:v=>fmt(v,0), series:[{name:'Snow (in)',var:'--s7',values:C.ym.map(r=>r.snow)}]})});
+  const idx=D.date.map((d,i)=>d.endsWith('-01-01')?i:null).filter(v=>v!==null);
+  chartCard(g,{title:'Daily temperature range', sub:'Min of station minimums and max of station maximums; 32 °F marks the pavement-freeze band', full:true, legend:[{name:'Tmax',var:'--s2'},{name:'Tmin',var:'--s1'}],
+    render:el=>lineChart(el,{x:D.date, height:220, series:[{name:'Tmax °F',var:'--s2',values:D.tmax,width:1.2},{name:'Tmin °F',var:'--s1',values:D.tmin,width:1.2}], xTicks:idx, xLabel:(i,full)=>full?D.date[i]:D.date[i].slice(0,4), refLines:[{y:32,label:'32 °F'}], yFmt:v=>fmt(v)+'°'})});
+  chartCard(g,{title:'Daily rainfall, maximum station (inches)', sub:'Spikes are the heavy-rain / hydroplaning days (Ida, 2 Sep 2021 = 7.3 in)', full:true,
+    render:el=>lineChart(el,{x:D.date, height:200, yMin:0, area:true, series:[{name:'Rain max (in)',var:'--s1',values:D.prcp_max,width:1}], xTicks:idx, xLabel:(i,full)=>full?D.date[i]:D.date[i].slice(0,4), yFmt:v=>fmt(v,1)})});
+  root.append(g);
+  const ev=h('div',{class:'grid g2',style:'margin-top:14px'});
+  ev.append(h('div',{class:'card'}, h('h3',{},'Largest snow days'), buildTable({columns:['Date','Snow max (in)','Depth max (in)','Tmin °F'], rows:C.events.snow.map(e=>[e.date,fmt(e.snow_max,1),fmt(e.snwd_max,1),fmt(e.tmin)]), numeric:[0,1,1,1]})));
+  ev.append(h('div',{class:'card'}, h('h3',{},'Largest rain days'), buildTable({columns:['Date','Rain max (in)','Rain area mean (in)','Tmin °F'], rows:C.events.rain.map(e=>[e.date,fmt(e.prcp_max,2),fmt(e.prcp_mean,2),fmt(e.tmin)]), numeric:[0,1,1,1]})));
+  root.append(ev);
+  root.append(h('div',{class:'card',style:'margin-top:14px'}, h('h3',{},'Stations used in the pull'),
+    buildTable({columns:['Station','Name','Network','Dist (mi)','Elev (m)','Precip cov.','Snow cov.','Temp cov.','In composite','Precip 21-25 (in)','Snow 21-25 (in)','Max snow (in)','Days ≥1 in snow'],
+      rows:C.stations.map(st=>[st.id,st.name,st.network,fmt(st.dist_mi,1),fmt(st.elev_m),pct(st.cov.PRCP),pct(st.cov.SNOW),pct(st.cov.TMAX),[st.composite.PRCP?'P':'',st.composite.SNOW?'S':'',st.composite.TMAX?'T':''].filter(Boolean).join('/')||'–',fmt(st.prcp_total,1),fmt(st.snow_total,1),fmt(st.snow_max,1),st.snow_days_ge_1]), numeric:[0,0,0,1,1,1,1,1,0,1,1,1,1]})));
+})();
+
+/* ------------------------------------------------------------------ */
+/* TAB 2: map with all datasets                                        */
+/* ------------------------------------------------------------------ */
+const MAPVIEW = {v:'all'}; try{ if(localStorage.getItem('i78-mapview')==='inrix') MAPVIEW.v='inrix'; }catch(e){}
+const MAPF = {basemap:'esri', metric:'p_lt50', year:'all', sev:'all', cls:'all', dir:'all', truck:false, wz:false, sec:false, adv:false, crashmode:'points', ccolor:'sev', opacity:0.5};
+const CRASH_COLOR_MODES={sev:'Severity (KABCO)', cls:'Weather class of the day', surface:'Surface condition', truck:'Truck involvement', type:'Crash type'};
+const BASEMAPS = {
+  esri:{name:'Esri World Street Map', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', opts:{maxZoom:18, attribution:'Tiles &copy; Esri'}},
+  esritopo:{name:'Esri World Topographic', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', opts:{maxZoom:18, attribution:'Tiles &copy; Esri'}},
+  esriimg:{name:'Esri World Imagery', url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', opts:{maxZoom:18, attribution:'Tiles &copy; Esri'}},
+  osm:{name:'OpenStreetMap (may show "access blocked" from a local file)', url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', opts:{maxZoom:19, attribution:'&copy; OpenStreetMap contributors'}},
+  none:{name:'No basemap (schematic)', url:null}
+};
+const BASEMAP_FALLBACK = ['esri','esritopo','none'];
+const SEG_METRICS = {p_lt50:'Share of time below 50 mph', p_lt35:'Share of time below 35 mph', speed_mean:'Mean speed (darker = slower)', episodes:'Slowdown episodes where this was the worst segment'};
+const MAPLAYERS = {};
+function crashFilter(){
+  if (!hasCR) return [];
+  return CR.points.filter(p => (MAPF.year==='all' || p.date.startsWith(MAPF.year)) &&
+    (MAPF.sev==='all' || (MAPF.sev==='inj' ? p.sev!=='O' : (p.sev==='K'||p.sev==='A'))) &&
+    (MAPF.cls==='all' || (MAPF.cls==='adv' ? p.cls>0 : p.cls===+MAPF.cls)) &&
+    (MAPF.dir==='all' || p.dir===MAPF.dir) && (!MAPF.truck || p.truck) && (!MAPF.wz || p.wz) && (!MAPF.sec || p.sec) && (!MAPF.adv || isAdvPoint(p)));
+}
+function setBasemap(key, auto){
+  const map=window._map; if(!map) return;
+  if (MAPLAYERS._base){ map.removeLayer(MAPLAYERS._base); MAPLAYERS._base=null; }
+  MAPF.basemap=key; const sel=$('#map-basemap'); if(sel) sel.value=key;
+  const note=$('#map-basenote'); if(note) note.textContent = key==='none' ? 'Schematic mode: no background tiles. All data layers still draw on the corridor geometry.' : (auto ? `Basemap switched to ${BASEMAPS[key].name} after the previous provider failed to load.` : '');
+  const b=BASEMAPS[key]; if(!b.url) return;
+  let errs=0, ok=false; const layer=L.tileLayer(b.url, b.opts);
+  layer.on('tileload',()=>{ ok=true; });
+  layer.on('tileerror',()=>{ errs++; if(!ok && errs>=4){ const i=BASEMAP_FALLBACK.indexOf(key); const next=BASEMAP_FALLBACK[Math.min(BASEMAP_FALLBACK.length-1, i+1)]; if(next!==key) setBasemap(next,true); } });
+  layer.setOpacity(MAPF.opacity); layer.addTo(map); layer.bringToBack(); MAPLAYERS._base=layer;
+}
+function sevColor(sv){ return css(SEV_COLOR_VAR[sv]||'--sevO'); }
+const SURF_GROUP = p => p.surface==='Dry'?'Dry': p.surface==='Wet'?'Wet': ['Snowy','Icy','Slush'].includes(p.surface)?'Snow / ice / slush': 'Other / unknown';
+const TYPE_GROUP = p => /Same Direction/.test(p.type)?'Same direction (rear-end, sideswipe)': /Fixed Object/.test(p.type)?'Fixed object': /Overturn|Animal|Pedestrian|Non-fixed/i.test(p.type)?'Overturn / animal / other object': 'Other';
+const CRASH_CATS = {
+  sev:{keys:SEV, label:k=>SEV_LABEL[k], color:k=>css(SEV_COLOR_VAR[k]), of:p=>p.sev},
+  cls:{keys:[0,1,2,3,4,5,6], label:k=>CLS_SHORT[k], color:k=>k===0?css('--muted'):clsColor(k), of:p=>p.cls},
+  surface:{keys:['Dry','Wet','Snow / ice / slush','Other / unknown'], label:k=>k, color:k=>({'Dry':css('--muted'),'Wet':css('--s1'),'Snow / ice / slush':css('--s7'),'Other / unknown':css('--s4')})[k], of:SURF_GROUP},
+  truck:{keys:['Truck-involved','No truck'], label:k=>k, color:k=>k==='Truck-involved'?css('--s2'):css('--s1'), of:p=>p.truck?'Truck-involved':'No truck'},
+  type:{keys:['Same direction (rear-end, sideswipe)','Fixed object','Overturn / animal / other object','Other'], label:k=>k, color:k=>({'Same direction (rear-end, sideswipe)':css('--s1'),'Fixed object':css('--s2'),'Overturn / animal / other object':css('--s3'),'Other':css('--muted')})[k], of:TYPE_GROUP}
+};
+function crashColor(p){ const c=CRASH_CATS[MAPF.ccolor]||CRASH_CATS.sev; return c.color(c.of(p)); }
+function crashLegend(){ const lg=$('#map-crashlegend'); if(!lg) return; lg.innerHTML=''; const c=CRASH_CATS[MAPF.ccolor]||CRASH_CATS.sev; const pts=crashFilter(); const counts={}; pts.forEach(p=>{ const k=c.of(p); counts[k]=(counts[k]||0)+1; });
+  lg.append(h('span',{},'Crashes by '+CRASH_COLOR_MODES[MAPF.ccolor].toLowerCase()+': '), ...c.keys.map(k=>h('span',{}, h('i',{style:'background:'+c.color(k)}), c.label(k)+' ('+fmt(counts[k]||0)+')'))); }
+function crashPopup(p){ return `<b>${p.date}${p.hour!=null?' '+String(p.hour).padStart(2,'0')+':00':''}</b> · ${p.dir}B MP ${p.mp??'–'}<br>${SEV_LABEL[p.sev]} · ${p.type}<br>Surface ${p.surface} · Weather ${p.weather}${p.truck?' · truck':''}${p.wz?' · work zone':''}${p.sec?' · possible secondary':''}<br>Weather class of day: ${p.cls>=0?CLS_SHORT[p.cls]:'–'}`; }
+function refreshCrashLayers(){
+  if (!hasCR || !window._map) return;
+  const pts=crashFilter(); MAPLAYERS.crash.clearLayers(); MAPLAYERS.density.clearLayers();
+  pts.forEach(p=>{ const col=crashColor(p); L.circleMarker([p.lat,p.lon],{radius:p.sev==='K'||p.sev==='A'?7:4,color:css('--surface'),fillColor:col,fillOpacity:.9,weight:1.2}).bindPopup(crashPopup(p)).addTo(MAPLAYERS.crash); });
+  crashLegend();
+  const bins={}; pts.forEach(p=>{ if(p.mp==null||p.dir==='X') return; const b=Math.floor(p.mp*2)/2; const k=b+'|'+p.dir; bins[k]=bins[k]||{mp:b,dir:p.dir,n:0,inj:0,truck:0,adv:0}; const o=bins[k]; o.n++; if(p.sev!=='O') o.inj++; if(p.truck) o.truck++; if(isAdvPoint(p)) o.adv++; });
+  Object.values(bins).forEach(o=>{ const ll=mpToLatLng(o.mp+0.25); const off=o.dir==='E'?-0.0022:0.0022; L.circleMarker([ll[0]+off,ll[1]],{radius:3+2.2*Math.sqrt(o.n),color:css(o.dir==='E'?'--s1':'--s2'),fillColor:css(o.dir==='E'?'--s1':'--s2'),fillOpacity:.35,weight:1.5}).bindPopup(`<b>${o.dir}B MP ${o.mp} to ${(o.mp+0.5).toFixed(1)}</b><br>${o.n} crashes · ${o.inj} with injury · ${o.truck} truck-involved · ${o.adv} adverse-coded`).addTo(MAPLAYERS.density); });
+  const st=$('#map-status'); if(st) st.textContent=`Showing ${fmt(pts.length)} of ${fmt(CR.points.length)} geocoded crashes (${fmt(ST.n)} mainline crashes in the extract; ${fmt(ST.n-CR.points.length)} lack usable coordinates).`;
+  if (MAPF.crashmode==='points'){ if(!window._map.hasLayer(MAPLAYERS.crash)) MAPLAYERS.crash.addTo(window._map); if(window._map.hasLayer(MAPLAYERS.density)) window._map.removeLayer(MAPLAYERS.density); }
+  else { if(!window._map.hasLayer(MAPLAYERS.density)) MAPLAYERS.density.addTo(window._map); if(window._map.hasLayer(MAPLAYERS.crash)) window._map.removeLayer(MAPLAYERS.crash); }
+}
+function refreshSegments(){
+  if (!hasIX || !window._map) return;
+  MAPLAYERS.seg.clearLayers(); const m=MAPF.metric; const vals=IX.tmcs.map(t=>segMetric(t,m)); const lo=Math.min(...vals), hi=Math.max(...vals);
+  IX.tmcs.forEach(t=>{ const v=segMetric(t,m); const off=t.dir==='E'?-0.0009:0.0009;
+    const line=L.polyline((t.geom||[[t.lat0,t.lon0],[t.lat1,t.lon1]]).map(c=>[c[0]+off*0.7,c[1]]),{color:rampColor(v,lo,hi,m==='speed_mean'),weight:7,opacity:.95}); line.on('click',()=>openSegment(t)); line.bindTooltip(`${t.dir}B ${t.name} · ${segFmt(m,v)} · click for the travel-time distribution`,{sticky:true}); line.addTo(MAPLAYERS.seg); if(false) line.bindPopup(`<b>${t.dir}B ${t.name}</b><br>${t.tmc} · ${t.miles} mi · ref ${t.ref_speed} mph<br>${SEG_METRICS[m]}: <b>${segFmt(m,v)}</b><br>Mean speed ${t.speed_mean} mph · below 50 mph ${pct(t.p_lt50,1)} · below 35 mph ${pct(t.p_lt35,2)}<br>Worst segment in ${fmt((IX.worst_tmc_counts||{})[t.tmc]||0)} slowdown episodes · ${fmt(t.n)} records`); });
+  const lg=$('#map-seglegend'); if(lg){ lg.innerHTML=''; lg.append(h('span',{},'INRIX segments, '+SEG_METRICS[m].toLowerCase()+': '), h('span',{class:'ramp'}, SEQ.map(v=>h('i',{style:'background:'+css(v)}))), h('span',{}, segFmt(m,m==='speed_mean'?hi:lo)+' to '+segFmt(m,m==='speed_mean'?lo:hi))); }
+}
+function initMap(){
+  const el=$('#mapdiv'); if(!el || window._map) return;
+  if (typeof L==='undefined'){ el.innerHTML='<div class="note">Leaflet failed to load, so the map cannot draw. Coordinates are in the tables.</div>'; return; }
+  const map=L.map(el,{scrollWheelZoom:false, preferCanvas:true}); window._map=map;
+  setBasemap(MAPF.basemap,false);
+  const overlays={};
+  // VSL zones
+  const zones=L.layerGroup();
+  COR.zones.forEach((z,i)=>{ const color=css(ZONE_VARS[i%ZONE_VARS.length]); L.polyline(mpPath(z.mp_start,z.mp_end),{color,weight:14,opacity:.22}).bindTooltip(`${z.id} ${z.name} (MP ${z.mp_start} to ${z.mp_end})<br>${z.note||''}`,{sticky:true}).addTo(zones);
+    const mid=mpToLatLng((z.mp_start+z.mp_end)/2); L.marker([mid[0]+0.004,mid[1]],{icon:L.divIcon({className:'',html:`<span class="zone-label" style="border-color:${color}">${z.id}</span>`,iconSize:[36,18],iconAnchor:[18,9]}),interactive:false}).addTo(zones); });
+  zones.addTo(map); overlays['VSL zones']=zones;
+  // corridor + interchanges
+  const corr=L.layerGroup();
+  L.polyline(COR.centerline,{color:css('--ink-2'),weight:2,opacity:.6,dashArray:'6 6'}).addTo(corr).bindTooltip('I-78 (INRIX segment end points)');
+  COR.interchanges.forEach(x=>L.circleMarker([x.lat,x.lon],{radius:5,color:css('--ink'),fillColor:css('--surface'),fillOpacity:1,weight:2}).addTo(corr).bindTooltip(`MP ${x.mp}: ${x.label}`));
+  corr.addTo(map); overlays['Interchanges, centerline']=corr;
+  // INRIX segments
+  if (hasIX){ MAPLAYERS.seg=L.layerGroup().addTo(map); overlays['INRIX segments (metric above)']=MAPLAYERS.seg; refreshSegments();
+    const hot=L.layerGroup(); const wc=IX.worst_tmc_counts||{}; const mx=Math.max(1,...Object.values(wc));
+    IX.tmcs.forEach(t=>{ const n=wc[t.tmc]||0; if(!n) return; const off=t.dir==='E'?-0.0035:0.0035; L.circleMarker([(t.lat0+t.lat1)/2+off,(t.lon0+t.lon1)/2],{radius:4+14*Math.sqrt(n/mx),color:css('--s4'),fillColor:css('--s4'),fillOpacity:.3,weight:1.5}).bindPopup(`<b>${t.dir}B ${t.name}</b><br>Worst segment in <b>${fmt(n)}</b> slowdown episodes (${pct(n/((IX.event_counts||{})[t.dir]||1),0)} of ${t.dir}B episodes)`).addTo(hot); });
+    overlays['Slowdown hot spots']=hot; }
+  // crashes
+  if (hasCR){ MAPLAYERS.crash=L.layerGroup(); MAPLAYERS.density=L.layerGroup(); overlays['Crashes (filtered)']=MAPLAYERS.crash; overlays['Crash density per 0.5 mi']=MAPLAYERS.density; refreshCrashLayers(); }
+  // stations
+  if (hasC){ const stn=L.layerGroup(); const netColor=n=>n==='COOP'?css('--s2'):css('--s3');
+    C.stations.forEach(st=>{ const r=5+8*(st.cov.PRCP||0); L.circleMarker([st.lat,st.lon],{radius:r,color:netColor(st.network),fillColor:netColor(st.network),fillOpacity:.45,weight:1.5}).addTo(stn).bindPopup(`<b>${st.name}</b><br>${st.id} · ${st.network} · ${st.dist_mi} mi from corridor · elev ${fmt(st.elev_m)} m<br>Coverage: precip ${pct(st.cov.PRCP)}, snow ${pct(st.cov.SNOW)}, temp ${pct(st.cov.TMAX)}<br>Total precip ${fmt(st.prcp_total,1)} in · snow ${fmt(st.snow_total,1)} in · max daily snow ${fmt(st.snow_max,1)} in (${st.snow_max_date})`); });
+    stn.addTo(map); overlays['Weather stations']=stn; }
+  // candidate RWIS sites
+  const rwis=L.layerGroup();
+  RWIS_SITES.forEach(r=>{ const ll=mpToLatLng(r.mp); L.marker(ll,{icon:L.divIcon({className:'',html:`<span class="rwis-label">RWIS ${r.id}</span>`,iconSize:[60,18],iconAnchor:[30,9]})}).bindPopup(`<b>Candidate RWIS ${r.id}: ${r.name}</b> (MP ${r.mp})<br>${r.why}`).addTo(rwis); });
+  overlays['Candidate RWIS sites']=rwis;
+  L.control.layers(null, overlays, {collapsed:false}).addTo(map);
+  L.control.scale({imperial:true, metric:false}).addTo(map);
+  map.fitBounds(L.latLngBounds(COR.centerline).pad(0.25));
+  map.whenReady(()=>setTimeout(()=>map.invalidateSize(),100));
+}
+function toggleFullscreen(force){
+  const ix = MAPVIEW.v==='inrix';
+  const el = ix ? $('#inrixwrap') : $('#mapdiv'); if(!el) return; const on = force===undefined ? !el.classList.contains('fullscreen') : force;
+  el.classList.toggle('fullscreen', on); $$('.map-fullbtn').forEach(b=>{ b.textContent = on ? 'Exit full screen (Esc)' : 'Full screen'; });
+  if (on && !el.querySelector('.map-exit')){ const x=h('button',{type:'button',class:'mapbtn map-exit',style: ix ? 'position:absolute;top:8px;right:12px;z-index:1000' : 'position:absolute;top:10px;left:56px;z-index:1000'},'Exit full screen'); x.addEventListener('click',()=>toggleFullscreen(false)); el.append(x); }
+  if (!on){ const x=el.querySelector('.map-exit'); if(x) x.remove(); }
+  document.body.style.overflow = on ? 'hidden' : '';
+  setTimeout(()=>{ if(window._map) window._map.invalidateSize(); inrixCall(w=>w.__inrix.map.invalidateSize()); }, 60);
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && $$('.fullscreen').length) toggleFullscreen(false); });
+/* Embedded INRIX map (tab 2, "INRIX travel time" view). The full page is inlined as INRIX_MAP_SRC and loaded into an
+   iframe the first time the view is shown, so the dashboard stays a single file and pays the cost only on demand. */
+function inrixCall(fn){ const f=$('#inrixframe'); try{ if(f && f.contentWindow && f.contentWindow.__inrix) fn(f.contentWindow); }catch(e){} }
+function syncInrixTheme(t){ const f=$('#inrixframe'); try{ if(f && f.contentWindow && f.contentWindow.__applyTheme) f.contentWindow.__applyTheme(t||'auto'); }catch(e){} }
+function ensureInrixFrame(){
+  const w=$('#inrixwrap'); if(!w || !INRIX_MAP_SRC) return;
+  let f=$('#inrixframe');
+  if(!f){
+    f=h('iframe',{id:'inrixframe',title:'I-78 INRIX travel-time map'});
+    f.addEventListener('load',()=>{ let t=null; try{ t=localStorage.getItem('i78-theme'); }catch(e){} syncInrixTheme(t); inrixCall(x=>x.__inrix.map.invalidateSize()); });
+    w.append(f); f.srcdoc=INRIX_MAP_SRC;
+  } else inrixCall(x=>x.__inrix.map.invalidateSize());
+}
+function setMapView(v){
+  MAPVIEW.v=v; try{ localStorage.setItem('i78-mapview',v);}catch(e){}
+  $$('.mapview .mapbtn[data-view]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.view===v?'true':'false'));
+  const ix = v==='inrix';
+  ['#map-filters','#mapdiv','#segpanel','#map-legend','#map-status','#map-basenote'].forEach(s=>{ const e=$(s); if(e) e.style.display = ix ? 'none' : ''; });
+  const w=$('#inrixwrap'); if(w) w.style.display = ix ? 'block' : 'none';
+  const n=$('#map-ixnote'); if(n) n.style.display = ix ? '' : 'none';
+  if(ix){ if($('#panel-map').classList.contains('active')) ensureInrixFrame(); }
+  else setTimeout(()=>{ if(window._map) window._map.invalidateSize(); else initMap(); }, 50);
+}
+
+/* segment click: travel-time distribution panel ---------------------- */
+let SEG_DAYTYPE='weekday';
+function openSegment(t){
+  const panel=$('#segpanel'); if(!panel) return; panel.innerHTML='';
+  const D=(IX.tmc_dist||{})[t.tmc];
+  const card=h('div',{class:'card segpanel'});
+  const close=h('button',{type:'button',class:'mapbtn'},'Close'); close.addEventListener('click',()=>{ panel.innerHTML=''; });
+  card.append(h('div',{class:'seghead'}, h('div',{}, h('h3',{},`${t.dir==='E'?'Eastbound':'Westbound'} · ${t.name}`), h('div',{class:'muted'},`${t.tmc} · ${t.miles} mi · reference speed ${t.ref_speed} mph · ${fmt(t.n)} five-minute records · geometry ${t.geom_routed?'OSRM-routed':'straight line'}`)), close));
+  if (!D){ card.append(h('p',{class:'note'},'Travel-time distributions are not in the INRIX summary yet. Re-run scripts/preprocess_inrix.py and rebuild.')); panel.append(card); card.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  const P=D.pct.all, L_=D.pct_labels; const pv=k=>P[L_.indexOf(k)];
+  card.append(h('div',{class:'segstats'},
+    h('span',{},'Free-flow ', h('b',{},fmt(D.ff_tt,2)+' min')), h('span',{},'Mean ', h('b',{},fmt(D.mean_tt,2)+' min')), h('span',{},'Median ', h('b',{},fmt(pv(50),2))), h('span',{},'85th ', h('b',{},fmt(pv(85),2))), h('span',{},'95th ', h('b',{},fmt(pv(95),2))), h('span',{},'99th ', h('b',{},fmt(pv(99),2))),
+    h('span',{},'Buffer index (95th/50th − 1) ', h('b',{},pct(D.bti,0))), h('span',{},'Share above 1.5× free-flow ', h('b',{},pct(D.p_gt_1_5ff,1))), h('span',{},'Above 2× ', h('b',{},pct(D.p_gt_2ff,2))),
+    h('span',{},'Worst segment in ', h('b',{},fmt((IX.worst_tmc_counts||{})[t.tmc]||0)+' episodes'))));
+  const tog=h('div',{class:'toggle',style:'margin-bottom:8px'}); const bW=h('button',{type:'button','aria-pressed':SEG_DAYTYPE==='weekday'?'true':'false'},'Weekday'), bE=h('button',{type:'button','aria-pressed':SEG_DAYTYPE==='weekend'?'true':'false'},'Weekend'), bA=h('button',{type:'button','aria-pressed':SEG_DAYTYPE==='all'?'true':'false'},'All days');
+  const setDT=d=>{ SEG_DAYTYPE=d; [bW,bE,bA].forEach(b=>b.setAttribute('aria-pressed','false')); ({weekday:bW,weekend:bE,all:bA})[d].setAttribute('aria-pressed','true'); rerenderAll(); };
+  bW.onclick=()=>setDT('weekday'); bE.onclick=()=>setDT('weekend'); bA.onclick=()=>setDT('all'); tog.append(bW,bE,bA);
+  card.append(h('div',{style:'display:flex;gap:10px;align-items:center;flex-wrap:wrap'}, h('span',{class:'muted',style:'font-size:.84rem'},'Day type for both charts:'), tog));
+  const g=h('div',{class:'grid g2'});
+  chartCard(g,{title:'Distribution of travel time on this segment', sub:'Share of 5-minute records by travel time; shaded by percentile band. Dashed lines mark free-flow, median, 85th and 95th percentile.', legend:[{name:'Up to median',var:'--seq1'},{name:'Median to 85th',var:'--seq2'},{name:'85th to 95th',var:'--seq3'},{name:'Above 95th',var:'--seq5'}],
+    render:el=>densityChart(el,{D, daytype:SEG_DAYTYPE}),
+    table:{columns:['Percentile','All days (min)','Weekday (min)','Weekend (min)'], rows:L_.map((k,i)=>['p'+k, fmt(D.pct.all[i],2), D.pct.weekday?fmt(D.pct.weekday[i],2):'–', D.pct.weekend?fmt(D.pct.weekend[i],2):'–']), numeric:[0,1,1,1]}});
+  chartCard(g,{title:'Travel time by time of day with percentile bands', sub:'Median line with the 25th to 75th (darker) and 5th to 95th (lighter) percentile bands; dashed line = free-flow travel time.', legend:[{name:'5th to 95th',var:'--seq1'},{name:'25th to 75th',var:'--seq3'},{name:'Median',var:'--seq5'}],
+    render:el=>bandChart(el,{D, daytype:SEG_DAYTYPE==='all'?'weekday':SEG_DAYTYPE}),
+    table:{columns:['Hour','p5','p25','p50','p75','p95'], rows:HOURS.map((hh,i)=>{ const r=(D.hourly[SEG_DAYTYPE==='all'?'weekday':SEG_DAYTYPE]||[])[i]; return [hh+':00', ...(r?r.map(v=>fmt(v,2)):['–','–','–','–','–'])]; }), numeric:[0,1,1,1,1,1]}});
+  card.append(g);
+  const ev=(IX.events||[]).filter(e=>e.worst_tmc===t.tmc).slice(0,8);
+  if (ev.length) card.append(h('h4',{},'Largest slowdown episodes where this was the worst segment (top 400 corridor-wide)'), buildTable({columns:['Start','End','Duration (min)','Min speed (mph)','Max corridor TT (min)','Excess veh-min per veh/h'], rows:ev.map(e=>[e.start,e.end,e.dur_min,fmt(e.min_speed,1),fmt(e.max_tt,1),fmt(e.excess_veh_min_per_vph,1)]), numeric:[0,0,1,1,1,1]}));
+  panel.append(card); setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
+function densityChart(el,{D, daytype}){
+  const hist=D.hist[daytype]||D.hist.all, edges=D.edges, P=D.pct[daytype]||D.pct.all, L_=D.pct_labels, pv=k=>P[L_.indexOf(k)];
+  const W=Math.max(320, el.clientWidth), H=240, pad={l:44,r:12,t:12,b:30}, iw=W-pad.l-pad.r, ih=H-pad.t-pad.b;
+  const tot=hist.reduce((a,b)=>a+b,0)||1, share=hist.map(v=>v/tot); const mx=Math.max(...share,1e-9);
+  const lo=edges[0], hi=edges[edges.length-1]; const xs=v=>pad.l+(v-lo)/(hi-lo)*iw, ys=v=>pad.t+ih-(v/mx)*ih;
+  const svg=s('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H}); const tip=tooltip(el);
+  const yt=niceTicks(0,mx,4); yt.forEach(t=>{ if(t>mx*1.05) return; svg.append(s('line',{x1:pad.l,x2:W-pad.r,y1:ys(t),y2:ys(t),stroke:css('--grid')})); svg.append(s('text',{x:pad.l-6,y:ys(t)+4,'text-anchor':'end','font-size':11,fill:css('--muted')},pct(t,1))); });
+  const xt=niceTicks(lo,hi,6); xt.forEach(t=>{ if(t<lo||t>hi) return; svg.append(s('text',{x:xs(t),y:H-8,'text-anchor':'middle','font-size':11,fill:css('--muted')},fmt(t,1)+' min')); });
+  const band=v=> v<=pv(50)?css('--seq1'): v<=pv(85)?css('--seq2'): v<=pv(95)?css('--seq3'): css('--seq5');
+  hist.forEach((c,i)=>{ const x0=xs(edges[i]), x1=xs(edges[i+1]); const mid=(edges[i]+edges[i+1])/2; const rect=s('rect',{x:x0+0.5,y:ys(share[i]),width:Math.max(1,x1-x0-1),height:ys(0)-ys(share[i]),fill:band(mid)});
+    rect.addEventListener('mousemove',ev=>{ const rb=svg.getBoundingClientRect(); tip.show(`<b>${fmt(edges[i],2)} to ${fmt(edges[i+1],2)} min</b><br>${pct(share[i],2)} of records (${fmt(c)})<br>${(mid/D.ff_tt).toFixed(2)}× free-flow`,(x0+(x1-x0)/2)*(rb.width/W),ev.clientY-rb.top); }); rect.addEventListener('mouseleave',()=>tip.hide()); svg.append(rect); });
+  svg.append(s('line',{x1:pad.l,x2:W-pad.r,y1:ys(0),y2:ys(0),stroke:css('--axis')}));
+  [[D.ff_tt,'free-flow'],[pv(50),'median'],[pv(85),'85th'],[pv(95),'95th']].forEach(([v,lab],i)=>{ if(v<lo||v>hi) return; svg.append(s('line',{x1:xs(v),x2:xs(v),y1:pad.t,y2:ys(0),stroke:css('--ink-2'),'stroke-dasharray':'4 3'})); svg.append(s('text',{x:xs(v)+3,y:pad.t+10+i*12,'font-size':10,fill:css('--ink-2')},lab+' '+fmt(v,2))); });
+  el.append(svg);
+}
+function bandChart(el,{D, daytype}){
+  const rows=D.hourly[daytype]||[]; const W=Math.max(320, el.clientWidth), H=240, pad={l:44,r:12,t:12,b:30}, iw=W-pad.l-pad.r, ih=H-pad.t-pad.b;
+  const vals=rows.flatMap(r=>r||[]); if(!vals.length){ el.append(h('p',{class:'muted'},'Not enough records for this day type.')); return; }
+  let lo=Math.min(D.ff_tt*0.9,...vals), hi=Math.max(...vals); const yt=niceTicks(lo,hi,5); lo=yt[0]; hi=yt[yt.length-1];
+  const xs=i=>pad.l+(i/23)*iw, ys=v=>pad.t+ih-(v-lo)/(hi-lo)*ih;
+  const svg=s('svg',{viewBox:`0 0 ${W} ${H}`,width:W,height:H}); const tip=tooltip(el);
+  yt.forEach(t=>{ svg.append(s('line',{x1:pad.l,x2:W-pad.r,y1:ys(t),y2:ys(t),stroke:css('--grid')})); svg.append(s('text',{x:pad.l-6,y:ys(t)+4,'text-anchor':'end','font-size':11,fill:css('--muted')},fmt(t,1))); });
+  HOURS.forEach((hh,i)=>{ if(i%3===0) svg.append(s('text',{x:xs(i),y:H-8,'text-anchor':'middle','font-size':11,fill:css('--muted')},hh+':00')); });
+  const poly=(lo_i,hi_i,color)=>{ const idx=rows.map((r,i)=>r?i:-1).filter(i=>i>=0); const up=idx.map(i=>`${xs(i)},${ys(rows[i][hi_i])}`), dn=idx.slice().reverse().map(i=>`${xs(i)},${ys(rows[i][lo_i])}`); svg.append(s('polygon',{points:[...up,...dn].join(' '),fill:color,opacity:.85})); };
+  poly(0,4,css('--seq1')); poly(1,3,css('--seq3'));
+  const med=rows.map((r,i)=>r?`${xs(i)},${ys(r[2])}`:null).filter(Boolean).join(' '); svg.append(s('polyline',{points:med,fill:'none',stroke:css('--seq5'),'stroke-width':2}));
+  svg.append(s('line',{x1:pad.l,x2:W-pad.r,y1:ys(D.ff_tt),y2:ys(D.ff_tt),stroke:css('--ink-2'),'stroke-dasharray':'4 3'})); svg.append(s('text',{x:W-pad.r,y:ys(D.ff_tt)-4,'text-anchor':'end','font-size':10,fill:css('--ink-2')},'free-flow '+fmt(D.ff_tt,2)+' min'));
+  const hit=s('rect',{x:pad.l,y:pad.t,width:iw,height:ih,fill:'transparent'});
+  hit.addEventListener('mousemove',ev=>{ const rb=svg.getBoundingClientRect(); const i=Math.max(0,Math.min(23,Math.round((ev.clientX-rb.left)*(W/rb.width)-pad.l)/iw*23)); const r=rows[i]; tip.show(`<b>${HOURS[i]}:00</b>${r?`<br>p5 ${fmt(r[0],2)} · p25 ${fmt(r[1],2)} · <b>median ${fmt(r[2],2)}</b> · p75 ${fmt(r[3],2)} · p95 ${fmt(r[4],2)} min`:'<br>no data'}`,(ev.clientX-rb.left),ev.clientY-rb.top); }); hit.addEventListener('mouseleave',()=>tip.hide()); svg.append(hit);
+  el.append(svg);
+}
+const RWIS_SITES=[
+  {id:'A', mp:9.0, name:'Jugtown Mountain summit', why:'Highest point, first to freeze and first to fog; both COOP temperature stations are in valleys so ridge-top pavement temperature is unobserved.'},
+  {id:'B', mp:7.8, name:'Westbound descent to Bloomsbury', why:'Downgrade crash hot spot; a grip sensor here drives the grade-adjusted limit for trucks.'},
+  {id:'C', mp:6.5, name:'Musconetcong valley / Bloomsbury', why:'Valley fog and the weigh-station merge.'},
+  {id:'D', mp:2.0, name:'Delaware valley approach', why:'River fog and the toll-bridge approach; western boundary of the first zone.'},
+  {id:'E', mp:12.5, name:'Perryville / Exit 12', why:'Co-located with NJSP Perryville Station; east-end reference for the transition back to 65 mph.'}];
+(function(){
+  const root=$('#panel-map');
+  root.append(h('h2',{},'Map: every dataset on one corridor'), h('p',{}, 'VSL zones, interchanges, INRIX segment performance, slowdown hot spots, geocoded crashes (filterable), 0.5-mile crash density, NOAA weather stations and candidate RWIS sites. Toggle layers in the control at the top right; use the filters to subset the crash layers. Only the background tiles need the network: if a provider is blocked on your network, pick another basemap or the schematic mode. Click an INRIX segment to open its travel-time distribution below the map. Segment geometry: '+(hasIX?IX.geometry_source:'n/a')+'.'));
+  const sel=(id,label,opts,key,onchange)=>{ const s_=h('select',{id}); opts.forEach(([v,l])=>s_.append(h('option',{value:v},l))); s_.value=MAPF[key]; s_.addEventListener('change',()=>{ MAPF[key]=s_.value; onchange(); }); return h('label',{}, label, s_); };
+  const chk=(label,key)=>{ const c=h('input',{type:'checkbox'}); c.checked=MAPF[key]; c.addEventListener('change',()=>{ MAPF[key]=c.checked; refreshCrashLayers(); rerenderAll(); }); return h('label',{}, c, label); };
+  const years=hasCR?ST.years.map(y=>[String(y),String(y)]):[];
+  const hasIXmap = hasIX && !!INRIX_MAP_SRC;
+  if (hasIXmap){
+    const vb=(v,label)=>{ const b=h('button',{type:'button',class:'mapbtn','data-view':v,'aria-pressed':'false'},label); b.addEventListener('click',()=>setMapView(v)); return b; };
+    root.append(h('div',{class:'filters mapview',id:'map-view'}, h('span',{},'Map view'), vb('all','All datasets'), vb('inrix','INRIX travel time (full-page map, embedded)'),
+      (()=>{ const b=h('button',{type:'button',class:'mapbtn map-fullbtn'},'Full screen'); b.addEventListener('click',()=>toggleFullscreen()); return b; })(),
+      h('a',{class:'mapbtn',href:'I78_INRIX_Map.html',target:'_blank',style:'text-decoration:none'},'Open INRIX map in a new tab ↗')));
+  }
+  const f=h('div',{class:'filters',id:'map-filters'},
+    sel('map-basemap','Basemap', Object.entries(BASEMAPS).map(([k,v])=>[k,v.name]), 'basemap', ()=>setBasemap(MAPF.basemap,false)),
+    hasIX? sel('map-metric','Segment color', Object.entries(SEG_METRICS), 'metric', ()=>{ refreshSegments(); rerenderAll(); }) : null,
+    hasCR? sel('map-year','Year', [['all','All years'],...years], 'year', ()=>{ refreshCrashLayers(); rerenderAll(); }) : null,
+    hasCR? sel('map-sev','Severity', [['all','All'],['inj','Injury (K, A, B, C)'],['ka','Fatal or serious (K, A)']], 'sev', ()=>{ refreshCrashLayers(); rerenderAll(); }) : null,
+    hasCR&&hasC? sel('map-cls','Weather class of day', [['all','All'],['adv','Any adverse class'],...CLS.map(c=>[String(c.id),CLS_SHORT[c.id]])], 'cls', ()=>{ refreshCrashLayers(); rerenderAll(); }) : null,
+    hasCR? sel('map-dir','Direction', [['all','Both'],['E','Eastbound'],['W','Westbound']], 'dir', ()=>{ refreshCrashLayers(); rerenderAll(); }) : null,
+    hasCR? sel('map-mode','Crash display', [['points','Points'],['density','Density per 0.5 mi']], 'crashmode', ()=>refreshCrashLayers()) : null,
+    hasCR? sel('map-ccolor','Color crashes by', Object.entries(CRASH_COLOR_MODES), 'ccolor', ()=>refreshCrashLayers()) : null,
+    (()=>{ const r=h('input',{type:'range',min:10,max:100,step:5,value:Math.round(MAPF.opacity*100),title:'Basemap opacity'}); const lab=h('span',{},pct(MAPF.opacity)); r.addEventListener('input',()=>{ MAPF.opacity=r.value/100; lab.textContent=pct(MAPF.opacity); if(MAPLAYERS._base) MAPLAYERS._base.setOpacity(MAPF.opacity); }); return h('label',{},'Basemap opacity', r, lab); })(),
+    (()=>{ const b=h('button',{type:'button',class:'mapbtn map-fullbtn',id:'map-full'},'Full screen'); b.addEventListener('click',()=>toggleFullscreen()); return b; })(),
+    hasIX && !hasIXmap ? h('a',{class:'mapbtn',href:'I78_INRIX_Map.html',target:'_blank',style:'text-decoration:none'},'Open full-page INRIX map ↗') : null,
+    hasCR? chk('Adverse-coded only','adv') : null, hasCR? chk('Truck-involved only','truck') : null, hasCR? chk('Work zone only','wz') : null, hasCR? chk('Possible secondary only','sec') : null);
+  root.append(f);
+  root.append(h('div',{class:'map',id:'mapdiv'}));
+  if (hasIXmap){
+    root.append(h('div',{class:'map',id:'inrixwrap'}));
+    root.append(h('p',{class:'muted',id:'map-ixnote',style:'margin:6px 0;display:none'},'Embedded copy of I78_INRIX_Map.html built from the same data: color by metric, pick a day type and direction, drag the 15-minute slider or press Play, edit the class limits in the legend, click a segment for its distribution. The embedded copy does not keep its state in the page URL; use the new-tab version for a shareable link.'));
+  }
+  root.append(h('div',{id:'segpanel'}));
+  const lg=h('div',{class:'maplegend',id:'map-legend'});
+  lg.append(h('span',{id:'map-seglegend'}), h('span',{},'EB layers are offset south of the centerline, WB north.'));
+  if (hasCR) lg.append(h('span',{id:'map-crashlegend'}));
+  lg.append(h('span',{}, h('i',{class:'sq',style:'background:'+css('--s1')}), 'EB density'), h('span',{}, h('i',{class:'sq',style:'background:'+css('--s2')}), 'WB density'), h('span',{}, h('i',{style:'background:'+css('--s4')+';opacity:.5'}), 'Slowdown hot spot (size = episodes)'), h('span',{}, h('i',{style:'background:'+css('--s2')+';opacity:.6'}), 'COOP station'), h('span',{}, h('i',{style:'background:'+css('--s3')+';opacity:.6'}), 'CoCoRaHS station (size = coverage)'), h('span',{}, h('i',{class:'sq',style:'background:'+css('--s1')+';opacity:.3'}), 'Zone band'));
+  root.append(lg);
+  root.append(h('p',{class:'muted',id:'map-status',style:'margin:4px 0'},''), h('p',{class:'muted',id:'map-basenote',style:'margin:2px 0'},''));
+  root.append(h('div',{class:'note'}, COR.study_limits_note));
+  if (hasIXmap) setMapView(MAPVIEW.v);
+  // straight-line diagram, driven by the same filters
+  const g1=h('div',{class:'grid g1',style:'margin-top:14px'});
+  chartCard(g1,{title:'Straight-line diagram: crashes per 0.5 mile and INRIX segment performance', sub:'Top: filtered crashes by milepost, eastbound up and westbound down. Bands: INRIX segments colored by the metric selected above. Bottom: interchanges and VSL zones.', legend:[{name:'Eastbound crashes',var:'--s1'},{name:'Westbound crashes',var:'--s2'}],
+    render:el=>stripChart(el,{pts:crashFilter(), metric:hasIX?MAPF.metric:'p_lt50', metricLabel:SEG_METRICS[hasIX?MAPF.metric:'p_lt50']}),
+    table: hasCR? {columns:['MP bin','EB crashes','EB injury','EB truck','EB adverse','WB crashes','WB injury','WB truck','WB adverse'], rows:CR.mp_bins.map(b=>[b.mp+' to '+(b.mp+0.5).toFixed(1),b.E,b.E_inj,b.E_truck,b.E_adv,b.W,b.W_inj,b.W_truck,b.W_adv]), numeric:[0,1,1,1,1,1,1,1,1]} : null});
+  root.append(g1);
+  const g2=h('div',{class:'grid g2',style:'margin-top:14px'});
+  g2.append(h('div',{class:'card'}, h('h3',{},'VSL zones (config/corridor.json)'), buildTable({columns:['Zone','Name','MP start','MP end','Notes'], rows:COR.zones.map((z,i)=>[h('span',{}, h('i',{style:`display:inline-block;width:10px;height:10px;border-radius:2px;background:${css(ZONE_VARS[i%ZONE_VARS.length])};margin-right:6px`}), z.id),z.name,z.mp_start,z.mp_end,z.note]), numeric:[0,0,1,1,0]}), h('p',{class:'note'}, COR.note_on_zones)));
+  g2.append(h('div',{class:'card'}, h('h3',{},'Candidate RWIS sites'), h('p',{class:'muted'},'Proposed sensor locations shown as yellow labels on the map; mileposts are approximate until a field review.'), buildTable({columns:['Site','MP','Location','Why'], rows:RWIS_SITES.map(r=>[r.id,r.mp,r.name,r.why]), numeric:[0,1,0,0]})));
+  root.append(g2);
+})();
+
+/* ------------------------------------------------------------------ */
+/* TAB 3: statistical tests                                            */
+/* ------------------------------------------------------------------ */
+function buildStats(root){
+  root.append(h('h2',{style:'margin-top:22px'},'Statistical tests'));
+  if (!S){ root.append(h('div',{class:'note'}, 'Statistical tests need the climate composite plus the crash extract or INRIX daily series. '+(X.stats&&X.stats.error?'The last build reported: '+X.stats.error:'Rebuild after adding data.'))); return; }
+  const clsLab=i=>CLS_SHORT[i];
+  // ---- summary card
+  const sum=h('div',{class:'card'}, h('h3',{},'What the tests say'));
+  const items=[];
+  if (S.rate_ratios){ const A=S.rate_ratios.all, rows=A.rows, sig=rows.filter(r=>r.cls>0&&r.rr_lo!=null&&r.rr_lo>1), ns=rows.filter(r=>r.cls>0&&!(r.rr_lo!=null&&r.rr_lo>1));
+    items.push(h('li',{}, h('b',{},'Crash rate differs by weather class. '), `Chi-square goodness of fit against the day shares: χ² = ${fmt(A.chi2,1)} on ${A.chi2_dof} df, p = ${fmtP(A.chi2_p)}. Pooling every adverse class, the rate is ${fmt(A.pooled_adverse.rr,2)}× the dry-day rate (95% CI ${fmt(A.pooled_adverse.rr_lo,2)} to ${fmt(A.pooled_adverse.rr_hi,2)}, p = ${fmtP(A.pooled_adverse.p)}): the pooled effect is diluted by wet and freezing days that behave like dry days.`));
+    items.push(h('li',{}, h('b',{},'Significantly elevated: '), sig.length? sig.map(r=>`${clsLab(r.cls)} ${fmt(r.rr,2)}× (${fmt(r.rr_lo,2)} to ${fmt(r.rr_hi,2)}, p = ${fmtP(r.p)}, ${r.days} days)`).join('; ')+'.' : 'none individually.', ' ', h('b',{},'Not distinguishable from dry: '), ns.map(r=>`${clsLab(r.cls)} ${fmt(r.rr,2)}× (${fmt(r.rr_lo,2)} to ${fmt(r.rr_hi,2)})`).join('; ')+'. Wide intervals on the snow classes reflect only '+rows.filter(r=>r.cls>=5).reduce((a,r)=>a+r.days,0)+' significant-or-major snow days in five years.'));
+    if (S.rate_ratios.injury){ const I=S.rate_ratios.injury.rows.filter(r=>r.cls>0&&r.rr_lo!=null&&r.rr_lo>1); items.push(h('li',{}, h('b',{},'Injury crashes: '), I.length? 'elevated for '+I.map(r=>`${clsLab(r.cls)} (${fmt(r.rr,2)}×, ${fmt(r.rr_lo,2)} to ${fmt(r.rr_hi,2)})`).join(', ')+'.' : 'no class is individually significant with '+fmt(ST.injury_crashes)+' injury crashes; the point estimates follow the all-crash pattern.')); } }
+  if (S.models && S.models.all){ const M=S.models.all, w=M.terms.filter(t=>t.term.startsWith('Weather:')); const sig=w.filter(t=>t.p<0.05); const C_=S.models.continuous; const pr=C_&&C_.terms.find(t=>t.term.startsWith('Precipitation')), sd=C_&&C_.terms.find(t=>t.term.startsWith('Snow depth')), sn=C_&&C_.terms.find(t=>t.term.startsWith('Snowfall')), tm=C_&&C_.terms.find(t=>t.term.startsWith('Minimum'));
+    items.push(h('li',{}, h('b',{},'After adjusting for weekday, month and year (quasi-Poisson regression): '), sig.length? sig.map(t=>`${t.term.replace('Weather: ','')} ${fmt(t.rr,2)}× (${fmt(t.lo,2)} to ${fmt(t.hi,2)}, p = ${fmtP(t.p)})`).join('; ')+'.' : 'no weather class stays significant.', ` Dispersion ${fmt(M.dispersion,2)} (${M.dispersion>1.2?'moderate over-dispersion, standard errors inflated accordingly':'close to Poisson'}); weather, calendar and trend together explain ${pct(M.pseudo_r2,1)} of the deviance, so most day-to-day variation is not weather-driven.`));
+    if (pr) items.push(h('li',{}, h('b',{},'Dose-response: '), `each inch of area-mean precipitation multiplies the daily crash count by ${fmt(pr.rr,2)} (${fmt(pr.lo,2)} to ${fmt(pr.hi,2)}, p = ${fmtP(pr.p)}); each inch of snow on the ground by ${fmt(sd.rr,3)} (p = ${fmtP(sd.p)}); same-day snowfall ${fmt(sn.rr,3)} (p = ${fmtP(sn.p)}) and minimum temperature ${fmt(tm.rr,3)} per 10 °F (p = ${fmtP(tm.p)}) add nothing once the others are in the model.`)); }
+  if (S.speed_tests){ const E=S.speed_tests.E, W=S.speed_tests.W; const big=E.rows.filter(r=>r.cls>0&&r.mw_p!=null&&r.mw_p<0.05);
+    items.push(h('li',{}, h('b',{},'Drivers slow a little, late, and only in the worst classes. '), `Kruskal-Wallis across classes: H = ${fmt(E.kruskal_H,1)}, p = ${fmtP(E.kruskal_p)} (EB); ${fmt(W.kruskal_H,1)}, p = ${fmtP(W.kruskal_p)} (WB). Against dry days, ${big.length? big.map(r=>`${clsLab(r.cls)} median ${fmt(r.diff_median,1)} mph (Cliff's δ ${fmt(r.cliffs_delta,2)}, p = ${fmtP(r.mw_p)})`).join('; ') : 'no class differs'}; ${E.rows.filter(r=>r.cls>0&&!(r.mw_p<0.05)).map(r=>clsLab(r.cls)).join(', ')} show no detectable change. A 1 to 3 mph self-regulation against a 40 to 90% rise in crash risk is the quantitative case for a regulatory limit.`)); }
+  if (S.crash_vs_delay){ const E=S.crash_vs_delay.E, W=S.crash_vs_delay.W;
+    items.push(h('li',{}, h('b',{},'Crash days are slow days. '), `Daily crash count and hours with any segment below 35 mph correlate at Spearman r = ${fmt(E.spearman_r,2)} EB / ${fmt(W.spearman_r,2)} WB (p = ${fmtP(E.spearman_p)} / ${fmtP(W.spearman_p)}). Crash days average ${fmt(E.h35_crash_days,2)} h of segment speeds below 35 mph EB versus ${fmt(E.h35_no_crash_days,2)} h on crash-free days (Mann-Whitney p = ${fmtP(E.h35_mw_p)}); ${pct(E.p_episode_crash_days)} of crash days have at least one slowdown episode versus ${pct(E.p_episode_no_crash_days)} of other days (p = ${fmtP(E.p_episode_chi2_p)}). Direction of causality runs both ways (crashes cause queues; queues cause crashes), which is exactly what the queue-protection scenario targets.`)); }
+  if (S.dose && S.dose.spearman){ const sp=S.dose.spearman; items.push(h('li',{}, h('b',{},'Linear day-to-day correlations are weak. '), `Spearman r between daily precipitation and crashes is ${fmt(sp.precip_all.r,3)} (p = ${fmtP(sp.precip_all.p)}) over all days and ${fmt(sp.precip_wet_days_only.r,3)} on wet days only; snowfall ${fmt(sp.snow_all.r,3)}. The signal sits in the class contrasts and the heavy-precipitation tail, not in a straight line through every day. Monthly aggregates (n = 60) do not correlate significantly either, because crashes vary far more with traffic than with weather at that scale.`)); }
+  sum.append(h('ul',{class:'tight'}, items), h('p',{class:'muted'},'* marks p < 0.05. Exposure is days, not vehicle-miles; see Tab 6 for the methods and caveats.'));
+  root.append(sum);
+
+  const g=h('div',{class:'grid g2',style:'margin-top:14px'});
+  // ---- rate ratio chart
+  if (S.rate_ratios){ const A=S.rate_ratios.all.rows, I=(S.rate_ratios.injury||{}).rows||[], T=(S.rate_ratios.truck||{}).rows||[];
+    chartCard(g,{title:'Crash rate ratio by weather class of the day, with 95% confidence intervals', sub:'Crashes per day in the class ÷ crashes per dry day (log scale). An interval that excludes 1 is statistically significant.', legend:[{name:'All crashes',var:'--s1'},{name:'Injury crashes',var:'--s2'},{name:'Truck-involved',var:'--s3'}],
+      render:el=>ciChart(el,{rows:A.filter(r=>r.cls>0).map(r=>({label:`${clsLab(r.cls)} (${r.days} d)`, vals:[{v:r.rr,lo:r.rr_lo,hi:r.rr_hi,note:'p = '+fmtP(r.p)}, (()=>{const q=I.find(x=>x.cls===r.cls)||{}; return q.rr!=null?{v:q.rr,lo:q.rr_lo,hi:q.rr_hi,note:'p = '+fmtP(q.p)}:null;})(), (()=>{const q=T.find(x=>x.cls===r.cls)||{}; return q.rr!=null?{v:q.rr,lo:q.rr_lo,hi:q.rr_hi,note:'p = '+fmtP(q.p)}:null;})()]})), series:[{name:'All crashes',var:'--s1'},{name:'Injury crashes',var:'--s2'},{name:'Truck-involved',var:'--s3'}], log:true, refLine:1, xFmt:v=>fmt(v,v<1?2:0)+'×'}),
+      table:{columns:['Class','Days','Crashes','Rate / 100 d','Rate 95% CI','RR vs dry','RR 95% CI','p','Injury RR','Injury 95% CI','Injury p','Truck RR','Truck p'], rows:A.map(r=>{ const q=I.find(x=>x.cls===r.cls)||{}, t=T.find(x=>x.cls===r.cls)||{}; return [clsLab(r.cls),r.days,r.n,fmt(r.rate_per_100d,1),fmt(r.rate_lo,1)+' to '+fmt(r.rate_hi,1),fmt(r.rr,2),r.rr_lo!=null?fmt(r.rr_lo,2)+' to '+fmt(r.rr_hi,2):'–',sigSpan(r.p),fmt(q.rr,2),q.rr_lo!=null?fmt(q.rr_lo,2)+' to '+fmt(q.rr_hi,2):'–',sigSpan(q.p),fmt(t.rr,2),sigSpan(t.p)]; }), numeric:[0,1,1,1,1,1,1,1,1,1,1,1,1]}}); }
+  // ---- adjusted model
+  if (S.models && S.models.all){ const M=S.models.all, w=M.terms.filter(t=>t.term.startsWith('Weather:')||t.term.startsWith('Year'));
+    chartCard(g,{title:'Adjusted rate ratios: quasi-Poisson regression of daily crashes', sub:`Weather class effects after controlling for weekday, month and year trend (n = ${fmt(M.n)} days, dispersion ${fmt(M.dispersion,2)}, pseudo-R² ${pct(M.pseudo_r2,1)}). Table view lists every term.`, legend:[{name:'Rate ratio (95% CI)',var:'--s1'}],
+      render:el=>ciChart(el,{rows:w.map(t=>({label:t.term.replace('Weather: ','').replace(' / black-ice risk',''), vals:[{v:t.rr,lo:t.lo,hi:t.hi,note:'p = '+fmtP(t.p)}]})), series:[{name:'Adjusted RR',var:'--s1'}], log:true, refLine:1, xFmt:v=>fmt(v,v<1?2:0)+'×'}),
+      table:{columns:['Term','Coefficient','Rate ratio','95% CI','SE','z','p'], rows:M.terms.map(t=>[t.term,fmt(t.coef,3),fmt(t.rr,3),fmt(t.lo,3)+' to '+fmt(t.hi,3),fmt(t.se,3),fmt(t.z,2),sigSpan(t.p)]), numeric:[0,1,1,1,1,1,1]}});
+    if (S.models.continuous){ const Cm=S.models.continuous, cw=Cm.terms.slice(-4);
+      chartCard(g,{title:'Continuous weather drivers: rate ratio per unit', sub:'Same controls; per inch of precipitation, snowfall and snow depth, per 10 °F of minimum temperature above 32 °F.', legend:[{name:'Rate ratio (95% CI)',var:'--s1'}],
+        render:el=>ciChart(el,{rows:cw.map(t=>({label:t.term.replace(', area mean','').replace(', station max',''), vals:[{v:t.rr,lo:t.lo,hi:t.hi,note:'p = '+fmtP(t.p)}]})), series:[{name:'RR per unit',var:'--s1'}], log:true, refLine:1, xFmt:v=>fmt(v,v<1?2:0)+'×'}),
+        table:{columns:['Term','Rate ratio','95% CI','p'], rows:Cm.terms.map(t=>[t.term,fmt(t.rr,3),fmt(t.lo,3)+' to '+fmt(t.hi,3),sigSpan(t.p)]), numeric:[0,1,1,1]}}); } }
+  // ---- speed by class
+  if (S.speed_tests){ const E=S.speed_tests.E.rows, W=S.speed_tests.W.rows;
+    chartCard(g,{title:'Daily corridor mean speed by weather class: median and 10th to 90th percentile', sub:`Kruskal-Wallis p = ${fmtP(S.speed_tests.E.kruskal_p)} EB, ${fmtP(S.speed_tests.W.kruskal_p)} WB. Table view: Mann-Whitney p and Cliff's delta against dry days.`, legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+      render:el=>ciChart(el,{rows:E.map(r=>({label:`${clsLab(r.cls)} (${r.days} d)`, vals:[{v:r.median,lo:r.p10,hi:r.p90,note:r.mw_p!=null?'vs dry p = '+fmtP(r.mw_p):''}, (()=>{const q=W.find(x=>x.cls===r.cls)||{}; return {v:q.median,lo:q.p10,hi:q.p90,note:q.mw_p!=null?'vs dry p = '+fmtP(q.mw_p):''};})()]})), series:[{name:'EB',var:'--s1'},{name:'WB',var:'--s2'}], xFmt:v=>fmt(v,0)+' mph'}),
+      table:{columns:['Class','Days','EB median','EB Δ vs dry','EB Mann-Whitney p','EB Cliff δ','EB Welch p','WB median','WB Δ vs dry','WB Mann-Whitney p','WB Cliff δ'], rows:E.map(r=>{ const q=W.find(x=>x.cls===r.cls)||{}; return [clsLab(r.cls),r.days,fmt(r.median,1),r.diff_median!=null?fmt(r.diff_median,1):'–',sigSpan(r.mw_p),fmt(r.cliffs_delta,2),sigSpan(r.welch_p),fmt(q.median,1),q.diff_median!=null?fmt(q.diff_median,1):'–',sigSpan(q.mw_p),fmt(q.cliffs_delta,2)]; }), numeric:[0,1,1,1,1,1,1,1,1,1,1]}});
+    const HE=S.speed_tests.E.slowdown_rows, HW=S.speed_tests.W.slowdown_rows;
+    chartCard(g,{title:'Slowdown exposure by weather class: statistical tests', sub:'Mean hours per day with any segment below 35 mph and the share of days with any slowdown, tested against dry days.',
+      render:el=>barChart(el,{categories:HE.map(r=>CLS_AXIS[r.cls]), yFmt:v=>fmt(v,2)+' h', series:[{name:'EB',var:'--s1',values:HE.map(r=>r.mean_h)},{name:'WB',var:'--s2',values:HE.map(r=>(HW.find(x=>x.cls===r.cls)||{}).mean_h)}]}), legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+      table:{columns:['Class','Days','EB mean h < 35','EB ratio vs dry','EB Mann-Whitney p','EB % days any','EB proportion p','WB mean h < 35','WB ratio vs dry','WB Mann-Whitney p','WB % days any','WB proportion p'], rows:HE.map(r=>{ const q=HW.find(x=>x.cls===r.cls)||{}; return [clsLab(r.cls),r.days,fmt(r.mean_h,2),fmt(r.ratio_mean_h,2),sigSpan(r.mw_p),pct(r.p_days_any),sigSpan(r.prop_p),fmt(q.mean_h,2),fmt(q.ratio_mean_h,2),sigSpan(q.mw_p),pct(q.p_days_any),sigSpan(q.prop_p)]; }), numeric:[0,1,1,1,1,1,1,1,1,1,1,1]}}); }
+  // ---- dose response
+  if (S.dose){ const D=S.dose;
+    const doseCard=(key,title)=>{ const R=D[key].rows; chartCard(g,{title, sub:`Crashes per 100 days with exact Poisson 95% intervals; ${D[key].var.toLowerCase()}.`, legend:[{name:'Crashes per 100 days',var:'--s1'}],
+      render:el=>ciChart(el,{rows:R.map(r=>({label:`${r.bin} (${r.days} d)`, vals:[{v:r.rate_per_100d,lo:r.rate_lo,hi:r.rate_hi,note:r.crashes+' crashes'}]})), series:[{name:'Rate / 100 d',var:'--s1'}], xFmt:v=>fmt(v,0), xMin:0}),
+      table:{columns:['Bin','Days','Crashes','Injury','Truck','Rate / 100 d','95% CI','EB speed','WB speed','EB h < 35','WB h < 35','Episodes / day'], rows:R.map(r=>[r.bin,r.days,r.crashes,r.injury,r.truck,fmt(r.rate_per_100d,1),fmt(r.rate_lo,1)+' to '+fmt(r.rate_hi,1),fmt(r.speed_E,1),fmt(r.speed_W,1),fmt(r.h35_E,2),fmt(r.h35_W,2),fmt(r.ev_per_day,2)]), numeric:[0,1,1,1,1,1,1,1,1,1,1,1]}}); };
+    doseCard('precip','Crash rate by daily precipitation'); doseCard('snwd','Crash rate by snow on the ground'); doseCard('tmin','Crash rate by minimum temperature'); }
+  // ---- correlation matrix
+  if (S.corr && S.corr.keys.length){ const Cm=S.corr; const shortL=Cm.labels.map(l=>l.replace(' (area mean, in)','').replace(' (station max, in)',' max').replace(' / day','').replace('pct ','').replace('travel time','TT'));
+    chartCard(g,{title:'Spearman rank correlation matrix, daily panel', sub:`${fmt(Cm.n_days)} days. Blue = positive, orange = negative; hover for r and p. Table view shows r with Pearson r in brackets.`, full:true,
+      render:el=>corrMatrix(el,{labels:Cm.labels, shortLabels:shortL, values:Cm.spearman, pvals:Cm.spearman_p}),
+      table:{columns:['Variable',...shortL], rows:Cm.labels.map((l,i)=>[l,...Cm.spearman[i].map((r,j)=>i===j?'–':(r==null?'–':fmt(r,2)+' ['+fmt(Cm.pearson[i][j],2)+']'+(Cm.spearman_p[i][j]<0.05?' *':'')))])}}); }
+  root.append(g);
+  // ---- crash vs delay + lags + monthly tables
+  const g3=h('div',{class:'grid g3',style:'margin-top:14px'});
+  if (S.crash_vs_delay){ const rows=['E','W'].map(d=>{ const r=S.crash_vs_delay[d]; return [d==='E'?'Eastbound':'Westbound', r.crash_days+' / '+r.no_crash_days, fmt(r.spearman_r,3), sigSpan(r.spearman_p), fmt(r.h35_crash_days,2)+' vs '+fmt(r.h35_no_crash_days,2), sigSpan(r.h35_mw_p), pct(r.p_episode_crash_days)+' vs '+pct(r.p_episode_no_crash_days), sigSpan(r.p_episode_chi2_p), fmt(r.speed_r,3), sigSpan(r.speed_p)]; });
+    g3.append(h('div',{class:'card'}, h('h3',{},'Crash days versus delay'), buildTable({columns:['Dir','Crash / other days','r crashes × h < 35','p','h < 35: crash vs other','Mann-Whitney p','% days with episode','χ² p','r crashes × mean speed','p'], rows, numeric:[0,1,1,1,1,1,1,1,1,1]}))); }
+  if (S.lags){ g3.append(h('div',{class:'card'}, h('h3',{},'Lagged correlations: weather on day t−k versus crashes on day t'), h('p',{class:'muted'},'Spearman r. A lag-1 or lag-2 effect would indicate carry-over (ice, snow cover, debris); none is present beyond snow depth, which persists by definition.'), buildTable({columns:['Driver','Lag (days)','r','p','n'], rows:S.lags.map(r=>[r.driver,r.lag_days,fmt(r.r,3),sigSpan(r.p),fmt(r.n)]), numeric:[0,1,1,1,1]}))); }
+  if (S.monthly){ g3.append(h('div',{class:'card'}, h('h3',{},'Monthly aggregates (n = '+fmt((S.monthly.rows[0]||{}).n_months)+' months)'), h('p',{class:'muted'},'Crashes per 30 days against monthly weather and traffic totals. Pearson for linear association, Spearman for rank.'), buildTable({columns:['Driver','Pearson r','p','Spearman r','p'], rows:S.monthly.rows.map(r=>[r.driver,fmt(r.pearson_r,3),sigSpan(r.pearson_p),fmt(r.spearman_r,3),sigSpan(r.spearman_p)]), numeric:[0,1,1,1,1]}))); }
+  root.append(g3);
+  if (S.monthly && S.monthly.series){ const ser=S.monthly.series; const g4=h('div',{class:'grid g1',style:'margin-top:14px'});
+    chartCard(g4,{title:'Monthly crashes per 30 days, adverse days and slowdown episodes', sub:'Three series on one time axis, each indexed to its own 60-month mean (1.0 = average month) so they share a scale.', legend:[{name:'Crashes',var:'--s1'},{name:'Adverse days',var:'--s2'},{name:'Slowdown episodes',var:'--s3'}],
+      render:el=>{ const idx=k=>{ const m=ser.reduce((a,r)=>a+(r[k]||0),0)/ser.length; return ser.map(r=>m?+( (r[k]||0)/m ).toFixed(3):null); }; lineChart(el,{x:ser.map(r=>r.ym), xTicks:ser.map((r,i)=>r.ym.endsWith('-01')?i:-1).filter(i=>i>=0), xLabel:(i,full)=>full?ser[i].ym:ser[i].ym.slice(0,4), yFmt:v=>fmt(v,1)+'×', refLines:[{y:1,label:'60-month mean'}], series:[{name:'Crashes',var:'--s1',values:idx('crash_rate')},{name:'Adverse days',var:'--s2',values:idx('adverse_days')},{name:'Episodes',var:'--s3',values:idx('episodes')}]}); },
+      table:{columns:['Month','Crashes','Crashes / 30 d','Adverse days','Snow (in)','Precip (in)','Episodes','Hours < 35','Mean speed'], rows:ser.map(r=>[r.ym,r.crashes,fmt(r.crash_rate,2),r.adverse_days,fmt(r.snow,1),fmt(r.prcp,2),r.episodes,fmt(r.h35,1),fmt(r.speed,1)]), numeric:[0,1,1,1,1,1,1,1,1]}});
+    root.append(g4); }
+}
+
+/* ------------------------------------------------------------------ */
+/* TAB 2: correlations and user needs                                   */
+/* ------------------------------------------------------------------ */
+(function(){
+  const root=$('#panel-corr');
+  root.append(h('h2',{},'Validating the user needs with data'), h('p',{}, 'The core argument of the concept of operations is that a measurable share of crashes and delay on I-78 happens under conditions a VSL can detect in advance, and that drivers are not slowing enough on their own. Each need below is paired with the test that proves or disproves it and the result so far. The statistical tests that follow (rate ratios with confidence intervals, Poisson regression, rank tests, correlation matrix) are computed in scripts/stats_tests.py on a daily panel of ' + (S?fmt(S.panel_days):'–') + ' days.'));
+  const sbc=(d,k)=>(X.speed_by_cls||[]).find(r=>r.dir===d&&r.cls===k)||{};
+  const rr=k=>{ if(!hasCR||!hasC) return null; const n=CR.by_cls[k].n, d=C.period.days_in_class[CLS[k].key]; const n0=CR.by_cls[0].n, d0=C.period.days_in_class.dry; return (n/d)/(n0/d0); };
+  const needs=[
+    ['N1','Lower speeds when pavement is wet or icy','Crash rate per wet / freezing day vs dry day; INRIX speed on those days vs dry', hasCR&&hasC?`Relative risk: wet ${fmt(rr(1),2)}, heavy rain ${fmt(rr(2),2)}, freezing precip ${fmt(rr(3),2)}. ${fmt(ST.wet_n)} crashes on wet pavement (${pct(ST.wet_n/ST.n)}). EB speed on wet days ${fmt(sbc('E',1).speed,1)} vs dry ${fmt(sbc('E',0).speed,1)} mph: no self-regulation.`:'pending', hasCR?'supported':'pending'],
+    ['N2','Lower speeds in snow','Same test on snow days; winter crashes on the grades', hasCR&&hasC?`Relative risk: light snow ${fmt(rr(4),2)}, significant ${fmt(rr(5),2)}, major ${fmt(rr(6),2)}. ${fmt(ST.snow_ice_n)} crashes on snow / ice / slush. Speed on significant-snow days ${fmt(sbc('E',5).speed,1)} mph EB.`:'pending', hasCR?'supported':'pending'],
+    ['N3','Lower speeds in fog / low visibility','Fog-coded crashes per fog hour', hasCR?`${fmt(ST.fog_n)} fog-coded crashes in ${ST.nyears} yr; fog-hour denominator not available (needs hourly ASOS / RWIS).`:'pending','partly supported; exposure unknown'],
+    ['N4','Harmonize speeds before recurring congestion','TTI, peak-hour speeds, crash rate vs flow', hasIX?`Weekday corridor speeds 65 to 69 mph every hour, TTI ${fmt(avgMonthly('tti'),2)}. No recurring congestion in the study section.`:'pending', hasIX?'not supported (flow-based component out of scope here)':'pending'],
+    ['N5','Protect the back of queue after incidents','Slowdown episodes per year; delay on crash days vs other days; secondary crashes', hasIX&&hasCR?`${fmt(((IX.event_stats.E||{}).n_per_year||0)+((IX.event_stats.W||{}).n_per_year||0),0)} episodes / yr; days with 2+ crashes carry ${fmt((X.delay_by_crash_day||[]).find(r=>r.dir==='E'&&r.crash_day==='2+ crashes').h_any_lt35,2)} h of segment speeds < 35 mph EB vs ${fmt((X.delay_by_crash_day||[]).find(r=>r.dir==='E'&&r.crash_day==='no crash').h_any_lt35,2)} h on crash-free days; ${fmt(ST.secondary_n)} plausible secondary crashes.`:'pending', hasIX&&hasCR?'supported':'pending'],
+    ['N6','Safer work zones','Work-zone crash share; lane-closure hours', hasCR?`${fmt(ST.workzone_n)} crashes coded in a construction / maintenance zone (${pct(ST.workzone_n/ST.n)}), concentrated 2022-2024. Closure hours still needed for a rate.`:'pending','supported (rate pending)'],
+    ['N7','Manage truck speed on the grades','Truck share; downgrade crashes by direction', hasCR?`${pct(ST.truck_share)} truck involvement; ${fmt((CR.grade_dir.find(r=>r.grade==='Down Hill'&&r.dir==='W')||{}).n)} WB downhill crashes vs ${fmt((CR.grade_dir.find(r=>r.grade==='Down Hill'&&r.dir==='E')||{}).n)} EB.`:'pending','supported'],
+  ];
+  root.append(h('div',{class:'card'}, h('h3',{},'User needs, validation tests and results'), buildTable({columns:['#','Need','Validation test','Result so far','Status'], rows:needs})));
+  buildStats(root);
+
+  // relative risk table (auto-filled)
+  if (hasC){
+    const card=h('div',{class:'card',style:'margin-top:14px'});
+    card.append(h('h3',{},'Crash rate by weather class of the day (relative risk)'), h('p',{class:'muted'},'Denominators are days in each class from the climate pull; numerators are mainline crashes on those days (auto-filled from the crash extract, editable). Relative risk = crashes per day in the class ÷ crashes per dry day. Daily classes are coarse: a "wet day" may be wet for two hours, which dilutes the wet-day rate; the surface-coded crash counts in Tab 1 are the sharper measure.'));
+    const denom=CLS.map(c=>C.period.days_in_class[c.key]);
+    const tbody=h('tbody'); const inputs=[];
+    CLS.forEach((c,i)=>{ const inp=h('input',{type:'number',min:0,step:1,class:'inline-in',value:hasCR?CR.by_cls[i].n:''}); inputs.push(inp);
+      tbody.append(h('tr',{}, h('td',{}, h('i',{style:`display:inline-block;width:10px;height:10px;border-radius:2px;background:${clsColor(i)};margin-right:6px`}), CLS_SHORT[i]), h('td',{class:'num'},fmt(denom[i])), h('td',{class:'num'},fmt(denom[i]/C.period.years,1)), h('td',{},inp), h('td',{class:'num'},hasCR?CR.by_cls[i].injury:'–'), h('td',{class:'num',id:'rr-rate-'+i},'–'), h('td',{class:'num',id:'rr-rr-'+i},'–'), h('td',{class:'num'}, hasIX?fmt(sbc('E',i).speed,1)+' / '+fmt(sbc('W',i).speed,1):'–'), h('td',{class:'num'}, hasIX?fmt(sbc('E',i).h_any_lt35,2)+' / '+fmt(sbc('W',i).h_any_lt35,2):'–'))); });
+    card.append(h('div',{class:'tbl-scroll'}, h('table',{class:'t'}, h('thead',{}, h('tr',{}, h('th',{},'Condition class of the day'), h('th',{class:'num'},'Days 2021-25'), h('th',{class:'num'},'Days / yr'), h('th',{},'Crashes'), h('th',{class:'num'},'Injury crashes'), h('th',{class:'num'},'Crashes / 100 days'), h('th',{class:'num'},'Relative risk vs dry'), h('th',{class:'num'},'Mean speed EB / WB (mph)'), h('th',{class:'num'},'Hours any seg < 35 mph EB / WB'))), tbody)));
+    const recalc=()=>{ const dry=(+inputs[0].value||0)/Math.max(1,denom[0]); CLS.forEach((c,i)=>{ const v=+inputs[i].value; const rate=denom[i]?v/denom[i]:0; card.querySelector('#rr-rate-'+i).textContent=inputs[i].value===''?'–':fmt(100*rate,1); card.querySelector('#rr-rr-'+i).textContent=(inputs[i].value===''||!dry)?'–':fmt(rate/dry,2); }); };
+    inputs.forEach(i=>i.addEventListener('input',recalc));
+    root.append(card); recalc();
+  }
+
+  const g=h('div',{class:'grid g2',style:'margin-top:14px'});
+  if (hasIX && hasC && X.speed_by_cls){
+    chartCard(g,{title:'Corridor mean speed by weather class of the day', sub:'Daily mean of the 5-min corridor speed; the drop appears only for major snow', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+      render:el=>barChart(el,{categories:CLS_AXIS, yFmt:v=>fmt(v)+' mph', series:[{name:'EB',var:'--s1',values:CLS.map(c=>sbc('E',c.id).speed)},{name:'WB',var:'--s2',values:CLS.map(c=>sbc('W',c.id).speed)}]}),
+      table:{columns:['Class','Days','EB speed','EB TT 95th','EB h any<35','EB % days with slowdown','WB speed','WB TT 95th','WB h any<35','WB % days with slowdown'], rows:CLS.map(c=>{ const e=sbc('E',c.id), w=sbc('W',c.id); return [CLS_SHORT[c.id],e.days,e.speed,e.tt95,e.h_any_lt35,pct(e.p_days_with_slowdown),w.speed,w.tt95,w.h_any_lt35,pct(w.p_days_with_slowdown)]; }), numeric:[0,1,1,1,1,1,1,1,1,1]}});
+    chartCard(g,{title:'Hours per day with any segment below 35 mph, by weather class', sub:'Slowdown exposure rises with heavy rain and major snow; freezing-precip days are quieter (many are light events)', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+      render:el=>barChart(el,{categories:CLS_AXIS, yFmt:v=>fmt(v,1)+' h', series:[{name:'EB',var:'--s1',values:CLS.map(c=>sbc('E',c.id).h_any_lt35)},{name:'WB',var:'--s2',values:CLS.map(c=>sbc('W',c.id).h_any_lt35)}]})});
+  }
+  if (X.delay_by_crash_day){
+    chartCard(g,{title:'Slowdown hours on crash days versus crash-free days', sub:'Hours per day with any segment below 35 mph; the incident scenario\'s delay signature', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+      render:el=>{ const cats=['no crash','1 crash','2+ crashes']; barChart(el,{categories:cats, yFmt:v=>fmt(v,2)+' h', series:[{name:'EB',var:'--s1',values:cats.map(c=>(X.delay_by_crash_day.find(r=>r.dir==='E'&&r.crash_day===c)||{}).h_any_lt35)},{name:'WB',var:'--s2',values:cats.map(c=>(X.delay_by_crash_day.find(r=>r.dir==='W'&&r.crash_day===c)||{}).h_any_lt35)}]}); },
+      table:{columns:['Dir','Day type','Days','Hours any seg < 35','TT 95th (min)','% days with slowdown'], rows:X.delay_by_crash_day.map(r=>[r.dir,r.crash_day,r.days,r.h_any_lt35,r.tt95,pct(r.p_days_with_slowdown)]), numeric:[0,0,1,1,1,1]}});
+  }
+  if (hasC){
+    chartCard(g,{title:'Adverse days by month and weekday', sub:'Adverse-weather days 2021-25; weekday cells overlap commuter and truck traffic',
+      render:el=>heatmap(el,{rows:MONTHS, cols:DOW, values:C.dow_month, fmtV:v=>v+' adverse days'}),
+      table:{columns:['Month',...DOW], rows:C.dow_month.map((r,i)=>[MONTHS[i],...r]), numeric:[0,1,1,1,1,1,1,1]}});
+  }
+  if (hasCR){
+    chartCard(g,{title:'Adverse-condition crashes by weekday and hour', sub:'When weather-related crashes happen; compare with the all-crash matrix in Tab 1',
+      render:el=>heatmap(el,{rows:DOW, cols:HOURS, values:CR.hour_dow_adv, colLabelEvery:2, fmtV:v=>v+' adverse crashes'}),
+      table:{columns:['Day',...HOURS], rows:CR.hour_dow_adv.map((r,i)=>[DOW[i],...r])}});
+  }
+  root.append(g);
+  root.append(h('div',{class:'card',style:'margin-top:14px'}, h('h3',{},'What is still needed to close the validation'), h('ul',{class:'tight'},
+    h('li',{},h('b',{},'Hourly weather (ASOS KABE / KSMQ): '),'converts adverse days to adverse hours, isolates fog, and lets crash rates be computed per adverse hour rather than per day.'),
+    h('li',{},h('b',{},'Traffic volumes (NJDOT count stations): '),'vehicles per hour per lane for the flow screen and for turning the INRIX excess-minute figures into vehicle-hours and dollars.'),
+    h('li',{},h('b',{},'Crash extract for Pohatcong and Union townships: '),'completes MP 0 to 3.7 and 10.4 to 13 so the crash section matches the INRIX section.'),
+    h('li',{},h('b',{},'Incident log (NJSP CAD / OpenReach): '),'attributes each INRIX slowdown episode to a crash, breakdown, weather or work zone, which is the basis for the incident-delay benefit.'),
+    h('li',{},h('b',{},'Lane-closure log: '),'work-zone hours for a work-zone crash rate.'))));
+})();
+
+/* ------------------------------------------------------------------ */
+/* TAB 3: key scenarios                                                 */
+/* ------------------------------------------------------------------ */
+const es_=(hasIX&&IX.event_stats)||{};
+const wbDown=hasCR?(CR.grade_dir.find(r=>r.grade==='Down Hill'&&r.dir==='W')||{}).n:null;
+const SCEN=[
+ {id:'S0', name:'Normal operations (baseline)', trigger:'No adverse weather, no incident, no work zone, no sensor fault.', speed:'65 mph posted on every VSL sign (the static regulatory limit).',
+  detect:'RWIS grip ≥ 0.65 and surface DRY; INRIX / detector speeds within 5 mph of reference; no active events in the TOC event list.', exposure:hasC?`${fmt(365.25-C.period.per_year_adverse,0)} dry days/yr; weekday corridor speeds 65 to 69 mph in every hour (INRIX)`:'',
+  behavior:['Algorithm runs every 30 s on the latest RWIS (10-min) and traffic (1-min) data; computes a candidate speed for each zone; candidate equals 65 so nothing changes.','Automated health check every cycle: sign read-back, sensor heartbeat, data age. A stale input (> 20 min RWIS, > 5 min traffic) raises a device alarm, not a speed change.','Posted limit, candidate speed and every input are logged each cycle (CDOT 7.1) so a citation can be defended later.'],
+  users:{m:'Sees a 65 mph regulatory sign, identical to today; advance static signs "VARIABLE SPEED LIMIT ZONE NEXT 13 MILES" at each end.', t:'Dashboard shows all zones green; no action. Visual check of signs on CCTV at shift start.', i:'Reviews the nightly device-health report; schedules preventive maintenance.', e:'No interaction; NJSP can query the archive for any time stamp.', p:'511NJ shows "I-78 VSL: normal, 65 mph".'},
+  njnotes:'Baseline must also define the fail-safe: on loss of communications a sign holds the last verified value for 10 minutes then reverts to the static 65 mph display.'},
+ {id:'S1', name:'Rain and wet pavement (friction-based)', trigger:'RWIS surface status WET, or grip ≤ 0.60, or precipitation intensity ≥ 0.10 in/h, confirmed on two consecutive 10-min RWIS cycles or at two RWIS sites in adjacent zones.', speed:'55 mph (grip 0.50 to 0.60) stepping to 50 mph (grip 0.40 to 0.50) or 45 mph (grip < 0.40, heavy rain with spray). Jugtown downgrade zones go one step lower because grade is subtracted from friction (CDOT Eq. 2).',
+  detect:'RWIS pavement sensors at the ridge, the Musconetcong valley and the Delaware approach; NWS radar precipitation rate as a secondary check; CCTV for operator confirmation.', exposure:(hasC?`${fmt(py.wet+py.heavy,0)} wet days/yr (${fmt(py.heavy,0)} with ≥ 1 in)`:'')+(hasCR?`; ${fmt(ST.wet_n)} crashes on wet pavement (${pct(ST.wet_n/ST.n)} of all), ${fmt((CR.by_surface.find(r=>r.k==='Wet')||{}).injury)} with injury`:'')+(hasIX&&X.speed_by_cls?`; drivers hold ${fmt((X.speed_by_cls.find(r=>r.dir==='E'&&r.cls===1)||{}).speed,1)} mph on wet days`:''),
+  behavior:['Detection: RWIS reports WET and grip 0.52 at the Jugtown site; INRIX speeds still 66 mph (drivers not compensating, as the wet-day speed data shows).','Compute: braking distance to hold = 65² ÷ (30 × 0.82) = 172 ft; speed that stops in 172 ft at grip 0.52 minus 4.5% grade = √(30 × 172 × 0.475) ≈ 49.5 → 50 mph in the grade zone, 55 in level zones.','Transition: zones upstream post 60 then 65 so no driver meets a drop larger than 10 mph (CDOT 4.1.1).','Post: VSL signs change, amber beacons flash for the first 5 min, DMS reads "WET ROAD / REDUCED SPEED LIMIT AHEAD"; 511NJ event auto-created.','Verify: sign controller echoes the displayed value; CCTV snapshot stored with the log entry.','Hold and relax: a lowered limit stays at least 6 min; limits rise one 5-mph step per 6-min cycle and only after grip ≥ 0.65 for 30 min (hysteresis prevents flicker).'],
+  users:{m:'Sees beacons and the new limit; advance DMS tells them why. Trucks on the descent see the same limit (NJ has no differential truck limit).', t:'In "auto with notify" mode, operator gets an alert with the sensor values and CCTV frame; can veto within one cycle or override to a lower value. Logs any manual action with a reason code.', i:'No action unless an RWIS flags a data-quality fault; grip sensors need periodic calibration against the dry baseline.', e:'NJSP receives the active-limit feed; enforcement of the posted limit uses the archive time stamp.', p:'511NJ and the NJDOT social feed show "I-78 MP 0-13: speed limit reduced to 50 mph, wet road".'},
+  njnotes:'Ida (2 Sep 2021, 7.3 in) and the ten heaviest rain days are the stress cases: very heavy rain also cuts visibility, so S1 hands off to the S3 visibility check in the same algorithm pass. Heavy-rain days show 1.4 times the dry-day crash rate and the longest wet-weather slowdowns in the INRIX record.'},
+ {id:'S2', name:'Snow, ice and freezing precipitation', trigger:'RWIS surface status SNOW, ICE, FROST or SLUSH; or grip ≤ 0.45; or pavement temperature ≤ 32 °F with any precipitation; or NJDOT winter-operations "salting in progress" flag. Pre-stage on an NWS Winter Weather Advisory or Warning for Warren / Hunterdon.', speed:'45 mph on snow-covered lanes (grip 0.35 to 0.45), 40 mph in active snowfall with reduced visibility, 35 mph minimum in icing or when plows run in echelon. Raises in 5-mph steps as plows clear and grip recovers.',
+  detect:'RWIS pavement temperature and grip; precipitation-type sensor at the ridge; plow AVL from NJDOT winter operations; CCTV.', exposure:(hasC?`${fmt(py.snow_lt+py.snow_sig+py.snow_maj,0)} snow days/yr, ${fmt(py.freezing,0)} freezing-precip days/yr, ${fmt(C.period.per_year_freeze_thaw,0)} freeze-thaw days/yr`:'')+(hasCR?`; ${fmt(ST.snow_ice_n)} crashes on snow / ice / slush; snow-day crash rate 1.3 to 1.6 times dry`:'')+(hasIX&&X.speed_by_cls?`; speeds stay at ${fmt((X.speed_by_cls.find(r=>r.dir==='E'&&r.cls===5)||{}).speed,1)} mph on 1-3 in snow days`:''),
+  behavior:['Pre-stage (advisory issued): operator arms the winter profile; DMS announces "WINTER STORM EXPECTED, SPEED LIMIT MAY BE LOWERED"; no speed change yet.','Onset: pavement temperature drops through 32 °F with precipitation; with grip 0.35 and 4.5% grade the algorithm returns √(30 × 172 × 0.305) ≈ 39.7 → 40 mph on the grades, 45 elsewhere.','Active storm: if visibility < 1,000 ft the visibility loop lowers to 35 mph (floor). Signs show 35 across all zones; no transition steps needed because every zone is at the floor.','Plow operations: when plow AVL shows a plow train in a zone, that zone and the one upstream post the lesser of the algorithm value and 35 mph.','Post-storm refreeze: pavement temperature < 30 °F with residual moisture at night keeps 50 mph on bridges and the ridge until the sensors warm; the freeze-thaw days in the climate record are the exposure for this sub-case.','Recovery: limits step up 5 mph per 6-min cycle, only after grip has held above threshold for 30 min; operator can hold a lower value while crews are still on the shoulder.'],
+  users:{m:'Sees staged DMS warnings before the storm, then VSL values that track the road surface; limits rise again as the road clears, which builds trust.', t:'Arms the winter profile; confirms plow AVL integration; may hold limits for crew safety; coordinates with the regional maintenance yard on the salt / plow timeline.', i:'Winter readiness checks on RWIS heaters and sign faces; snow removal around cabinets.', e:'NJSP Perryville Station (Exit 12) uses the posted limit for enforcement and requests holds when working crashes; Hunterdon / Warren EMS get the active-limit feed.', p:'511NJ pushes the limit and road-surface status; media briefings cite the VSL as part of the storm plan.'},
+  njnotes:'The two COOP temperature stations are in valleys (71 m and 81 m); the Jugtown ridge is 150 to 200 m higher and will freeze earlier. The summit RWIS is the critical sensor. The 18 Feb 2021 snow day produced 6 crashes on the section.'},
+ {id:'S3', name:'Fog and low visibility', trigger:'RWIS visibility sensor < 1,000 ft (iterative lowering per CDOT Eq. 4/5), confirmed by CCTV contrast check or a second sensor; NWS Dense Fog Advisory as pre-stage. Also smoke or heavy-rain spray.', speed:'55 mph at 800 ft, 50 at 650 ft, 45 at 500 ft, 40 at 400 ft, 35 mph (floor) below about 300 ft, using 2.5 s perception-reaction plus braking on the measured friction.',
+  detect:'Forward-scatter visibility sensors co-located with the RWIS at the Delaware approach, Bloomsbury valley and the ridge; CCTV image-contrast analytics as a check.', exposure:(hasCR?`${fmt(ST.fog_n)} fog-coded crashes in ${ST.nyears} yr. `:'')+'Fog hours are not measurable from GHCN-Daily (data gap); expect late-summer and autumn radiation-fog mornings in the Musconetcong and Delaware valleys. Quantify from hourly ASOS at Lehigh Valley Intl (KABE) or the RWIS once installed.',
+  behavior:['Detection: visibility 600 ft at the Bloomsbury site at 06:10 on a September weekday; dry pavement; speeds 67 mph.','Compute: at 65 mph the minimum acceptable visibility is 2.5 × 1.47 × 65 + 65² ÷ (30 × 0.82) ≈ 411 ft; 600 ft ≥ 411 ft so no change on the equation alone. The sensor reading < 1,000 ft triggers the policy table instead: 600 ft → 50 mph. The ConOps should state which rule governs.','Post: 50 mph in the fog zone with 60 and 65 transitions upstream; DMS "FOG AHEAD / SPEED LIMIT 50"; beacons on.','Spatial limit: only zones whose sensor (or neighbour sensor within 2 mi) reports low visibility change; patchy valley fog must not drop the whole corridor.','Clear: limits restore 5 mph per cycle after visibility > 1,500 ft for 15 min.'],
+  users:{m:'Sees beacons and limit before entering the fog bank; the limit is the cue, because the fog is often not visible from the ridge.', t:'Verifies on CCTV (fog is the scenario most prone to sensor false positives from lens condensation); can override the zone to normal with a reason code.', i:'Keeps sensor optics clean; checks heater function.', e:'NJSP gets the alert; fog-related multi-vehicle crashes are the headline risk this scenario addresses.', p:'511NJ fog alert.'},
+  njnotes:'Visibility is the one trigger with no exposure data in the repo. Pull hourly ASOS visibility for KABE (and KSMQ Somerset as an east reference) for 2021-25 to count fog hours by month and hour before finalising this scenario\'s activation estimate.'},
+ {id:'S4', name:'Dense-flow speed harmonization (contingent, flow-based)', trigger:'6-minute running average flow ≥ inflection flow while mean speed is still ≥ 60 mph. INRIX shows no recurring congestion anywhere in the study section, so this component is contingent on volume data showing peak flows above 1,000 vphpl (CDOT Figure 2); otherwise it is out of scope.', speed:'60 → 55 → 50 mph as flow rises, computed as maximum flow momentum ÷ observed flow, rounded to 5 mph, floored at the dry minimum (45 mph).',
+  detect:'Microwave vehicle radar detectors (MVRD) at each zone boundary for volume and speed; INRIX as the corridor-wide check; NJDOT count stations for calibration.', exposure:hasIX?`Weekday corridor mean speed never drops below 65 mph in any hour; monthly TTI ${fmt(avgMonthly('tti'),2)}. Recurring-congestion exposure: effectively zero in 2021-25.`:'pending INRIX',
+  behavior:['Detection: flow averages 1,350 vphpl with speeds 64 mph (dense, fast, short headways; the steep part of the crash-rate hockey-stick curve).','Compute: momentum 1,100 vphpl × 68 mph = 74,800; 74,800 ÷ 1,350 = 55.4 → 55 mph.','Post: 55 mph across the dense zones, 65 upstream of the first affected zone. Minimum 6-min dwell before any further change.','Harmonization outcome: speed variance drops; the aim is fewer rear-end and sideswipe crashes and delayed flow breakdown, not a lower average speed.','Relax: when the 6-min flow average falls below the threshold for two cycles, raise one step per cycle back to 65.'],
+  users:{m:'Would see 55 mph during dense flow with traffic still moving; needs public education that the lower limit prevents the stop-and-go that would otherwise follow.', t:'Monitors the flow-speed dashboard; can switch the flow component off during special events or when detectors are suspect.', i:'Detector calibration quarterly; volume sanity checks.', e:'NJSP enforcement is most valuable here because compliance in dry, fast, dense traffic is lowest.', p:'511NJ shows reduced limit with reason "heavy traffic".'},
+  njnotes:'Recommendation: design the I-78 system as weather-based with queue and transition components (the CDOT fallback when flow thresholds are not met), and keep the detector layout compatible with a later flow component for the Clinton to I-287 section where recurring congestion does exist.'},
+ {id:'S5', name:'Traffic incident and queue protection', trigger:'(a) Automatic: zone mean speed falls ≥ 20 mph below the 6-min reference for two 30-s cycles, or any segment < 35 mph; (b) Operator: incident entered in the TOC event system (OpenReach / ATMS) or NJSP CAD with lane blockage; (c) Field request from NJSP, EMS or the Safety Service Patrol at the scene.', speed:'Zone with the queue: observed mean speed + 5, rounded up (CDOT 4.2.1), floored at 35 mph; zone upstream +10 mph; further upstream +10 again. Scene-protection manual value typically 45 mph (35 in adverse weather).',
+  detect:'MVRD / INRIX speed drop; CCTV; CAD feed; Safety Service Patrol radio; Waze / connected-vehicle crowd reports as early hints.', exposure:(hasIX?`${es_.E?fmt(es_.E.n_per_year,0):'–'} EB and ${es_.W?fmt(es_.W.n_per_year,0):'–'} WB slowdown episodes per year (median ${es_.E?fmt(es_.E.median_dur_min):'–'} / ${es_.W?fmt(es_.W.median_dur_min):'–'} min), most in the afternoon and evening`:'')+(hasCR?`; ${fmt(ST.secondary_n)} plausible secondary crashes (${pct(ST.secondary_share,1)}); the 12 Sep 2025 day had ${fmt(CR.top_days[0].n)} crashes`:''),
+  behavior:['Detection at 30-s resolution: speed in Z5 (Jugtown climb, EB) drops from 62 to 18 mph after a truck crash; queue-based speed = 18 + 5 → 25, floored to 35 mph.','Propagate: Z4 posts 45, Z3 posts 55, Z2 posts 65 (transition rule); posted within one minute of detection, far faster than the 6-min weather cycle.','Operator confirms on CCTV, enters the event, sets DMS "CRASH AHEAD / LEFT LANE BLOCKED / EXPECT DELAYS", and may extend the 45 mph zone to protect responders (NJ Move Over law).','NJSP on scene can radio the TOC for a lower limit or a longer protected zone; the TOC applies it with a reason code so the archive shows who asked and why.','As the queue dissolves (speeds recover for two cycles) limits step back up every minute, upstream zones first, so no sign shows a higher limit than the one downstream of a still-slow zone.','Post-incident: automatic report with time to detect, time to post, queue length and duration from INRIX, for the performance measures.'],
+  users:{m:'Sees the limit fall before reaching the back of the queue; stepped values cue a gradual deceleration instead of a hard brake.', t:'Primary actor: confirms, messages, coordinates responders, closes the event, and may override the automatic values.', i:'None during the event; investigates any detector that missed the drop.', e:'NJSP, fire, EMS, towing and the Safety Service Patrol are both users (safer scene) and inputs (can request limits). Fire / EMS dispatch (Hunterdon, Warren) receives the limit feed.', p:'511NJ incident alert carries the active limit and queue length.'},
+  njnotes:'This is the scenario that carries the travel-time case: every prevented secondary crash avoids a second queue, and smoother upstream deceleration shortens the primary queue. Days with 2+ crashes carry roughly twice the slowdown hours of crash-free days (Tab 3).'},
+ {id:'S6', name:'Work zones (planned lane closures)', trigger:'Scheduled lane closure or shoulder work in the NJDOT lane-closure / permit system for the section; mobile operations called in by the field supervisor.', speed:'Pre-set plan: 55 mph through the advance warning area, 45 mph at the taper and activity area, 65 restored 1 mi past the end of the work. Night paving on the grades may use 45 throughout. Values follow the NJDOT work-zone speed limit regulation process (Title 39 fine doubling applies).',
+  detect:'Lane-closure schedule (pre-loaded), portable work-zone ITS (queue-detection trailers), field crew confirmation via phone / radio, CCTV.', exposure:hasCR?`${fmt(ST.workzone_n)} crashes coded in a construction / maintenance zone (${pct(ST.workzone_n/ST.n)} of all), ${fmt(CR.by_year.filter(r=>r.year>=2022&&r.year<=2024).reduce((a,r)=>a+r.workzone,0))} of them in 2022-24. Closure hours (the denominator) still need the lane-closure log.`:'No work-zone data yet.',
+  behavior:['Day before: TOC loads the closure plan (zones, times, speeds); the system shows it as "scheduled" on the dashboard and on 511NJ.','Start: field supervisor confirms cones are placed; TOC activates the plan; signs change and DMS shows "ROAD WORK / SPEED LIMIT 45 / FINES DOUBLED".','During: weather and queue components still run; the posted value is always the minimum of the work-zone value and the algorithm value (a snow squall during night paving yields 35 mph).','End: supervisor confirms removal; TOC deactivates; signs return to the algorithm value. If the crew forgets, the plan auto-expires at the scheduled end plus 30 min with an operator alert.','Audit: every activation and deactivation is logged with the confirming person, so enforcement in the work zone is defensible.'],
+  users:{m:'Sees a regulatory work-zone limit with doubled fines that changes only when work is actually present, which increases compliance compared with static signs left up all week.', t:'Owns the plan: loads, activates, deactivates, and resolves conflicts with the weather and queue components.', i:'Field supervisor / contractor confirms setup and removal; portable queue trailers feed the queue component.', e:'NJSP work-zone enforcement details use the archive to confirm the limit in force at citation time.', p:'511NJ construction entry links to the active limit.'},
+  njnotes:'Regulatory work-zone limits in NJ require a documented speed-limit reduction; the ConOps should state whether VSL work-zone values are regulatory (preferred, with the regulation process built in) or advisory.'},
+ {id:'S7', name:'Truck speed on the Jugtown Mountain grades', trigger:'Any S1 to S3 weather trigger within the grade zones (MP 7 to 11), where downgrade is subtracted from friction; plus high truck share with a measured truck-car speed differential > 10 mph on the climb.', speed:'Grade zones post one 5-mph step lower than level zones under the same weather. No separate truck limit (NJ law has none); a DMS truck advisory ("TRUCKS 45 MPH ON DOWNGRADE WHEN WET") is the optional overweight-vehicle component.',
+  detect:'RWIS at the summit; MVRD with vehicle classification; CCTV; weigh-station (Exit 7) data for truck counts.', exposure:hasCR?`${pct(ST.truck_share)} of crashes involve a truck (${fmt(ST.truck_n)}); ${fmt(wbDown)} crashes on a westbound downgrade vs ${fmt((CR.grade_dir.find(r=>r.grade==='Down Hill'&&r.dir==='E')||{}).n)} eastbound; ${fmt((CR.by_type.find(r=>r.k==='Same Direction (Side Swipe)')||{}).truck)} of the ${fmt((CR.by_type.find(r=>r.k==='Same Direction (Side Swipe)')||{}).n)} sideswipes involve a truck.`:'',
+  behavior:['The friction-and-grade coefficient (Cfg = grip − downgrade) is applied per zone from the corridor config; the summit zones carry the steepest downgrade in each direction.','In wet conditions the WB descent to Bloomsbury posts 50 while level zones post 55; in snow it posts 40 versus 45.','Truck-focused messaging on the DMS before the descent; optional second line on the VSL sign if NJDOT later adopts differential limits.','Weigh-station merge (Exit 7) is a transition zone: the limit shown at the merge is the lower of the mainline and the downstream grade zone value.'],
+  users:{m:'Truck drivers get a grade-specific message and see the lower limit start before the crest.', t:'Monitors the truck speed differential; coordinates with the NJSP weigh-station crew.', i:'Classification detector calibration.', e:'NJSP commercial-vehicle enforcement at Exit 7.', p:'Trucking associations briefed before go-live.'},
+  njnotes:'Grades for MP 7-11 are placeholders in config/corridor.json. Replace with measured values from the NJDOT Straight Line Diagram or a LiDAR profile before using the calculator for design. The sideswipe share (truck lane changes on the climb) suggests a lane-use message alongside the speed limit.'},
+ {id:'S8', name:'Degraded system, fallback and manual override', trigger:'RWIS or detector data stale or out of range; sign read-back mismatch; communications loss; conflicting sensors in one zone; operator judgement that the algorithm is wrong.', speed:'Fail safe to the static 65 mph (or hold the last verified value for ≤ 10 min, then revert). Manual override allowed to any 5-mph value between 35 and 65 with a reason code and a two-person rule outside business hours.',
+  detect:'Device heartbeats, data-age monitors, range checks, sign read-back, nightly health report.', exposure:'Design metric: target ≥ 99% sign availability and ≤ 1 unplanned fallback per month per zone.',
+  behavior:['Sensor fault in one zone: that zone uses the neighbouring zone\'s RWIS if within 3 mi, else it drops to "weather-unknown" and can only post queue-based values; the operator is alerted.','Sign fault: the sign blanks or shows the static limit; the upstream sign posts 65 (no transition into an unknown value); maintenance ticket auto-created with priority "immediate" (regulatory device).','Comms loss to the TOC: signs run the last verified plan for 10 min then revert to 65; the archive records the gap.','Manual override: operator selects zone(s), value, duration and reason; the system refuses values above the algorithm\'s weather value (an operator can go lower, not higher, in adverse weather).','Return to automatic requires an explicit operator action and is logged.'],
+  users:{m:'Never sees a blank regulatory sign for long or a contradictory sequence of limits.', t:'Owns override and return-to-auto; follows the SOP checklist.', i:'Immediate response for sign and RWIS outages (CDOT 7.2.1 model).', e:'NJSP is notified when the system is in fallback because citations in that window rely on the static limit.', p:'511NJ shows "VSL temporarily static" when in fallback.'},
+  njnotes:'This scenario defines the enforceability of the whole system: the archive must prove, for any time stamp, what the sign showed and why.'},
+];
+(function(){
+  const root=$('#panel-scen');
+  root.append(h('h2',{},'Key operational scenarios'), h('p',{},'Each scenario names the condition the system must address, how it is detected, what the system does step by step, and how motorists, NJDOT personnel and emergency services interact with it. Speeds and thresholds follow the CDOT Variable Speed Limits Guidelines (2023) adapted to a 65-mph New Jersey freeway; numbers flagged as placeholders are to be replaced by design data. Exposure figures come from the climate, crash and INRIX data in Tab 1.'));
+  const first=t=>t.split('. ')[0].replace(/\.$/,'')+'.'; const mrows=SCEN.map(sc=>[sc.id,sc.name,first(sc.trigger),first(sc.speed),sc.exposure||'–']);
+  root.append(h('div',{class:'card'}, h('h3',{},'Scenario matrix'), buildTable({columns:['#','Scenario','Primary trigger','Typical posted speed','Exposure on I-78 (from data)'], rows:mrows})));
+  root.append(buildCalculator());
+  root.append(h('h2',{style:'margin-top:18px'},'Scenario descriptions'));
+  const wrap=h('div',{class:'grid'});
+  SCEN.forEach(sc=>{
+    const card=h('div',{class:'card scen'});
+    card.append(h('h3',{}, h('span',{class:'badge'},sc.id),' ',sc.name));
+    card.append(h('div',{class:'meta'}, h('span',{},h('b',{},'Trigger: '),sc.trigger), h('span',{},h('b',{},'Posted speed: '),sc.speed), h('span',{},h('b',{},'Detection: '),sc.detect), sc.exposure?h('span',{},h('b',{},'Exposure: '),sc.exposure):null));
+    card.append(h('h4',{},'System behavior'), h('ol',{class:'steps'}, sc.behavior.map(b=>h('li',{},b))));
+    card.append(h('h4',{},'User interaction'), buildTable({columns:['Actor','Interaction'], rows:[['Motorists',sc.users.m],['NJDOT TOC operator',sc.users.t],['NJDOT ITS / maintenance / field',sc.users.i],['NJSP and emergency services',sc.users.e],['Public information (511NJ, media)',sc.users.p]]}));
+    if (sc.njnotes) card.append(h('div',{class:'note'}, h('b',{},'I-78 note: '), sc.njnotes));
+    wrap.append(card);
+  });
+  root.append(wrap);
+})();
+
+/* ---- CDOT algorithm calculator ---------------------------------------- */
+function round5(v){ return Math.round(v/5)*5; }
+function ceil5(v){ return Math.ceil(v/5)*5; }
+function vslCompute(p){
+  const out={steps:[]};
+  const Smax=p.smax, minDry=p.minDry, minAdv=p.minAdv;
+  let Sflow=Smax;
+  if (p.flow>0 && p.inflect>0){ const M=p.inflect*p.ffs; Sflow=Math.min(Smax, Math.max(minDry, round5(M/p.flow))); out.steps.push(`Flow-based: momentum ${fmt(p.inflect)} vphpl × ${p.ffs} mph = ${fmt(M)}; ÷ ${fmt(p.flow)} vphpl = ${fmt(M/p.flow,1)} → ${Sflow} mph (capped ${minDry}–${Smax})`); }
+  else out.steps.push('Flow-based: no flow input, stays at '+Smax);
+  let Squeue=Smax;
+  if (p.dsSpeed>0 && p.dsSpeed<Smax){ Squeue=Math.min(Smax, Math.max(minAdv, ceil5(p.dsSpeed+5))); out.steps.push(`Queue-based: downstream mean ${p.dsSpeed} mph + 5 → rounded up to ${Squeue} mph`); }
+  else out.steps.push('Queue-based: downstream traffic free-flowing, stays at '+Smax);
+  let Strans=Math.min(Smax, p.dsPosted+10); out.steps.push(`Transition: downstream posted ${p.dsPosted} + 10 → ${Strans} mph`);
+  const Sdry=Math.max(minDry, Math.min(Sflow,Squeue,Strans));
+  out.steps.push(`Dry speed = max(${minDry}, min(${Sflow}, ${Squeue}, ${Strans})) = ${Sdry} mph`);
+  const cfDry=0.82-p.grade;
+  const Db=Sdry*Sdry/(30*cfDry);
+  const Cfg=Math.max(0.03, p.friction-p.grade);
+  let Sfg=Math.min(Sdry, round5(Math.sqrt(30*Db*Cfg)));
+  Sfg=Math.max(minAdv,Sfg);
+  out.steps.push(`Braking distance to hold: ${Sdry}² ÷ (30 × ${cfDry.toFixed(2)}) = ${fmt(Db)} ft; friction-and-grade coefficient ${p.friction.toFixed(2)} − ${p.grade.toFixed(3)} = ${Cfg.toFixed(2)}; √(30 × ${fmt(Db)} × ${Cfg.toFixed(2)}) = ${fmt(Math.sqrt(30*Db*Cfg),1)} → ${Sfg} mph`);
+  let S=Sfg; const vmin=v=>2.5*1.47*v + v*v/(30*Cfg);
+  let iter=0;
+  while (p.vis>0 && p.vis<vmin(S) && S>minAdv && iter<20){ S-=5; iter++; }
+  if (p.vis>0) out.steps.push(`Visibility: need ${fmt(vmin(Sfg))} ft at ${Sfg} mph; observed ${fmt(p.vis)} ft → ${iter?`lowered ${iter} step(s) to ${S} mph (needs ${fmt(vmin(S))} ft)`:'no change'}`);
+  S=Math.max(minAdv,S);
+  out.final=S; out.Sdry=Sdry; out.Sflow=Sflow; out.Squeue=Squeue; out.Strans=Strans; out.Sfg=Sfg; out.Db=Db;
+  return out;
+}
+function buildCalculator(){
+  const card=h('div',{class:'card',style:'margin-top:14px'});
+  card.append(h('h3',{},'System behavior calculator (CDOT algorithm, I-78 parameters)'), h('p',{class:'muted'},'Move the inputs to see what the signs would post. Flow, queue and transition give a "dry speed"; friction and grade shrink it to hold the dry braking distance; visibility lowers it further in 5-mph steps. Floors: 45 mph dry, 35 mph adverse (editable).'));
+  const inp=h('div',{class:'inputs'});
+  const F={};
+  const add=(key,label,type,val,extra={})=>{ const i=h('input',Object.assign({type,value:val},extra)); F[key]=i; inp.append(h('label',{},label,i)); i.addEventListener('input',update); };
+  add('smax','Max speed limit (mph)','number',COR.posted_speed_mph,{min:45,max:75,step:5});
+  add('minDry','Min dry speed (mph)','number',COR.min_dry_speed_mph,{min:30,max:60,step:5});
+  add('minAdv','Min adverse speed (mph)','number',COR.min_adverse_speed_mph,{min:25,max:55,step:5});
+  add('friction','Pavement friction / grip (0.05 ice … 0.82 dry)','number',0.82,{min:0.05,max:0.82,step:0.01});
+  add('grade','Steepest downgrade in zone (decimal, e.g. 0.045)','number',0.0,{min:0,max:0.09,step:0.005});
+  add('vis','Visibility (ft, 0 = sensor absent)','number',0,{min:0,max:6000,step:50});
+  add('flow','Observed flow (vphpl, 0 = ignore)','number',0,{min:0,max:2400,step:10});
+  add('inflect','Inflection flow (vphpl, placeholder)','number',1100,{min:500,max:2000,step:10});
+  add('ffs','Speed at inflection flow (mph)','number',68,{min:50,max:80,step:1});
+  add('dsSpeed','Downstream zone mean speed (mph, 0 = free flow)','number',0,{min:0,max:80,step:1});
+  add('dsPosted','Downstream zone posted limit (mph)','number',COR.posted_speed_mph,{min:25,max:75,step:5});
+  card.append(inp);
+  const presets=h('div',{style:'display:flex;flex-wrap:wrap;gap:6px;margin:10px 0'});
+  const PRE=[['Dry, free flow',{friction:0.82,grade:0,vis:0,flow:0,dsSpeed:0,dsPosted:65}],['Rain on level',{friction:0.55,grade:0,vis:0,flow:0,dsSpeed:0,dsPosted:65}],['Rain on Jugtown descent',{friction:0.52,grade:0.045,vis:0,flow:0,dsSpeed:0,dsPosted:65}],['Snow-covered, ridge',{friction:0.35,grade:0.045,vis:1500,flow:0,dsSpeed:0,dsPosted:65}],['Ice',{friction:0.15,grade:0.02,vis:0,flow:0,dsSpeed:0,dsPosted:65}],['Fog 500 ft, dry',{friction:0.82,grade:0,vis:500,flow:0,dsSpeed:0,dsPosted:65}],['Dense flow 1,350 vphpl',{friction:0.82,grade:0,vis:0,flow:1350,dsSpeed:0,dsPosted:65}],['Queue downstream 18 mph',{friction:0.82,grade:0,vis:0,flow:0,dsSpeed:18,dsPosted:35}],['Snow + queue',{friction:0.35,grade:0.045,vis:800,flow:0,dsSpeed:25,dsPosted:35}]];
+  PRE.forEach(([n,v])=>presets.append(h('button',{type:'button',class:'themebtn',onclick:()=>{ Object.entries(v).forEach(([k,val])=>F[k].value=val); update(); }},n)));
+  card.append(presets);
+  const outKV=h('div',{class:'kv'}); const stepsEl=h('ol',{class:'steps'}); const zoneEl=h('div');
+  card.append(h('div',{class:'grid g2'}, h('div',{}, h('h4',{},'Result'), outKV, h('h4',{style:'margin-top:10px'},'Transition profile upstream of the affected zone (eastbound example)'), zoneEl), h('div',{}, h('h4',{},'Calculation steps'), stepsEl)));
+  function update(){
+    const p={}; for (const k in F) p[k]=+F[k].value;
+    const r=vslCompute(p);
+    outKV.innerHTML='';
+    [['Flow-based speed',r.Sflow],['Queue-based speed',r.Squeue],['Transition speed',r.Strans],['Dry speed (min of the three, floored)',r.Sdry],['Friction-and-grade speed',r.Sfg],['Final posted speed',r.final+' mph']].forEach(([k,v])=>outKV.append(h('span',{},k),h('b',{},typeof v==='number'?v+' mph':v)));
+    stepsEl.innerHTML=''; r.steps.forEach(st=>stepsEl.append(h('li',{},st)));
+    zoneEl.innerHTML=''; const zb=h('div',{class:'zonebar'});
+    const zones=COR.zones; const target=Math.min(zones.length-1,5);
+    zones.forEach((z,i)=>{ let v; if(i===target) v=r.final; else if(i<target) v=Math.min(p.smax, r.final+10*(target-i)); else v=p.smax; zb.append(h('div',{class:i===target?'hot':(v<p.smax?'step':'')}, h('b',{},v), z.id)); });
+    zoneEl.append(zb, h('div',{class:'muted',style:'font-size:.78rem'},`Affected zone highlighted (${zones[target].id}, ${zones[target].name}); upstream zones step +10 mph per zone; downstream zones return to the maximum.`));
+  }
+  update();
+  return card;
+}
+
+/* ------------------------------------------------------------------ */
+/* TAB 4: potential impact                                              */
+/* ------------------------------------------------------------------ */
+(function(){
+  const root=$('#panel-impact');
+  root.append(h('h2',{},'Potential impact of the key scenarios'), h('p',{},'Two benefit streams: crashes avoided (the safety case, following the CDOT benefit/cost method) and travel time (fewer and shorter incident queues, minus the travel-time cost of lower limits while the system is active). Crash counts and INRIX delay units are now taken from the data; inputs marked ', h('span',{class:'badge warn'},'illustrative'), ' (volumes, value of time, cost per mile) still need corridor-specific values.'));
+  const exp=[
+    ['S1 Rain / wet',hasC?fmt(py.wet+py.heavy,0)+' days':'–','50 to 55 mph','Run-off-road, hydroplane, rear-end in spray',hasCR?`${fmt(ST.wet_n)} wet-pavement crashes, ${fmt((CR.by_surface.find(r=>r.k==='Wet')||{}).injury)} with injury`:'pending'],
+    ['S2 Snow / ice',hasC?fmt(py.snow_lt+py.snow_sig+py.snow_maj+py.freezing,0)+' days':'–','35 to 45 mph','Loss of control, pile-ups, truck jackknife on grades',hasCR?`${fmt(ST.snow_ice_n)} snow / ice / slush crashes`:'pending'],
+    ['S3 Fog','unknown (ASOS needed)','35 to 55 mph','Multi-vehicle rear-end in low visibility',hasCR?`${fmt(ST.fog_n)} fog-coded crashes`:'pending'],
+    ['S4 Dense flow','none observed (INRIX)','50 to 60 mph','Rear-end, sideswipe; flow breakdown','Out of scope unless volumes show > 1,000 vphpl'],
+    ['S5 Incidents / queues',hasIX?fmt(((es_.E||{}).n_per_year||0)+((es_.W||{}).n_per_year||0),0)+' episodes/yr':'–','35 to 55 mph (1-min updates)','Secondary crashes; queue delay',hasCR?`${fmt(ST.secondary_n)} plausible secondary crashes; delay unit from INRIX`:'pending'],
+    ['S6 Work zones','closure hours pending','45 to 55 mph','Work-zone crashes, worker exposure',hasCR?`${fmt(ST.workzone_n)} work-zone crashes`:'pending'],
+    ['S7 Trucks on grades','as S1/S2 within MP 7-11','one step lower','Truck runaway / overturn, sideswipe on climb',hasCR?`${pct(ST.truck_share)} truck involvement; ${fmt(wbDown)} WB downgrade crashes`:'pending'],
+  ];
+  root.append(h('div',{class:'card'}, h('h3',{},'Exposure and benefit mechanism by scenario'), buildTable({columns:['Scenario','Exposure (per year)','Posted speed when active','Crash types addressed','Crash evidence (2021-25)'], rows:exp})));
+
+  // ---- safety B/C ----
+  const card=h('div',{class:'card',style:'margin-top:14px'});
+  card.append(h('h3',{},'Safety benefit / cost (CDOT method)'), h('p',{class:'muted'},'Benefit = crashes in VSL-addressable conditions × crash reduction × unit cost, discounted over the service life. Addressable crashes default to the adverse-condition crashes in the extract (weather scenarios only; incident and work-zone crashes are a further benefit not counted here). Cost per mile and crash unit costs are CDOT 2023 defaults.'));
+  const F={}; const inp=h('div',{class:'inputs'});
+  const add=(k,label,val,extra={},tag=null)=>{ const i=h('input',Object.assign({type:'number',value:val},extra)); F[k]=i; const lab=h('label',{},label,i); if(tag) lab.prepend(h('span',{class:'badge '+(tag==='illustrative'?'warn':'good'),style:'align-self:flex-start'},tag)); inp.append(lab); i.addEventListener('input',calc); };
+  const advPDO=hasCR?ST.adverse_n-ST.adverse_injury_crashes:150, advINJ=hasCR?ST.adverse_injury_crashes:45, advFAT=hasCR?ST.adverse_fatalities:2;
+  add('len','Corridor length (mi)',hasCR?ST.section_len:10,{step:0.1,min:1},hasCR?'crash section':null);
+  add('years','Years of crash data',hasCR?ST.nyears:5,{step:1,min:1});
+  add('pdo','PDO crashes in addressable conditions (total, all years)',advPDO,{step:1,min:0},hasCR?'from crash extract':'illustrative');
+  add('inj','Injury crashes in addressable conditions',advINJ,{step:1,min:0},hasCR?'from crash extract':'illustrative');
+  add('fat','Fatal crashes in addressable conditions',advFAT,{step:1,min:0},hasCR?'from crash extract':'illustrative');
+  add('crf','Crash reduction (%)',20,{step:1,min:0,max:60});
+  add('cpdo','Unit cost, PDO ($)',11100,{step:100});
+  add('cinj','Unit cost, injury ($)',101800,{step:100});
+  add('cfat','Unit cost, fatal ($)',1820600,{step:1000});
+  add('capmi','Capital cost per mile ($)',500000,{step:10000},'illustrative');
+  add('power','Extra power / fiber extension ($)',0,{step:10000},'illustrative');
+  add('om','Annual O&M per mile ($)',30000,{step:1000},'illustrative');
+  add('life','Service life (yr)',20,{step:1,min:5});
+  add('rate','Discount rate (%)',5,{step:0.5});
+  add('growth','Traffic growth (% / yr)',2,{step:0.5});
+  card.append(inp);
+  const out=h('div',{class:'grid g3',style:'margin-top:10px'}); card.append(out);
+  const sens=h('div',{style:'margin-top:10px'}); card.append(sens);
+  function pvFactor(rate, g, n){ let pv=0; for(let t=1;t<=n;t++) pv+=Math.pow(1+g,t-1)/Math.pow(1+rate,t); return pv; }
+  function calc(){
+    const v={}; for(const k in F) v[k]=+F[k].value;
+    const annualCrashCost=(v.pdo*v.cpdo+v.inj*v.cinj+v.fat*v.cfat)/v.years;
+    const annualBenefit=annualCrashCost*v.crf/100;
+    const pvB=annualBenefit*pvFactor(v.rate/100, v.growth/100, v.life);
+    const capital=v.capmi*v.len+v.power;
+    const pvOM=v.om*v.len*pvFactor(v.rate/100,0,v.life);
+    const cost=capital+pvOM;
+    const bc=cost>0?pvB/cost:0;
+    const crashesAvoided=(v.pdo+v.inj+v.fat)/v.years*v.crf/100;
+    out.innerHTML='';
+    out.append(tile(fmt(crashesAvoided,1)+' / yr','Crashes avoided',`${fmt((v.inj+v.fat)/v.years*v.crf/100,1)} injury + fatal per year`), tile(money(annualBenefit),'Annual safety benefit',`of ${money(annualCrashCost)} addressable crash cost per year`), tile(money(pvB),'Present value of benefits',`${v.life} yr at ${v.rate}% with ${v.growth}% growth`), tile(money(capital),'Capital cost',`${money(v.capmi)}/mi × ${v.len} mi + power`), tile(money(cost),'Life-cycle cost (PV)',`incl. O&M ${money(pvOM)}`), tile(fmt(bc,2),'Benefit / cost ratio', bc>=1?'above the 1.0 break-even':'below break-even'));
+    sens.innerHTML=''; const rows=[10,15,20,25,30].map(c=>{ const b=annualCrashCost*c/100*pvFactor(v.rate/100,v.growth/100,v.life); return [c+'%',money(b),fmt(b/cost,2)]; });
+    sens.append(h('h4',{},'Sensitivity to the crash-reduction assumption'), buildTable({columns:['Crash reduction','PV benefits','B/C'],rows,numeric:[0,1,1]}));
+    window._bcAvoided=crashesAvoided; ttCalc();
+  }
+  root.append(card);
+
+  // ---- travel time ----
+  const tt=h('div',{class:'card',style:'margin-top:14px'});
+  const exE=es_.E?es_.E.total_excess_veh_min_per_vph/es_.E.n:17, exW=es_.W?es_.W.total_excess_veh_min_per_vph/es_.W.n:10;
+  tt.append(h('h3',{},'Travel-time effect'), h('p',{class:'muted'},`Benefit: each avoided lane-blocking crash removes its queue; smoother approach to remaining queues shortens them. Cost: while a reduced limit is active, through trips take longer. INRIX gives the delay unit directly: the average slowdown episode carries ${fmt(exE,1)} (EB) / ${fmt(exW,1)} (WB) excess vehicle-minutes per 1 veh/h of flow; multiplied by the hourly volume and divided by 60 it becomes vehicle-hours per episode. Volume and value of time are still placeholders.`));
+  const G={}; const inp2=h('div',{class:'inputs'});
+  const add2=(k,label,val,extra={},tag=null)=>{ const i=h('input',Object.assign({type:'number',value:val},extra)); G[k]=i; const lab=h('label',{},label,i); if(tag) lab.prepend(h('span',{class:'badge '+(tag==='illustrative'?'warn':'good'),style:'align-self:flex-start'},tag)); inp2.append(lab); i.addEventListener('input',ttCalc); };
+  add2('aadt','AADT, both directions',60000,{step:1000},'illustrative');
+  add2('vph','Hourly volume per direction during a typical episode (veh/h)',1400,{step:50},'illustrative');
+  add2('truck','Truck share (%)',25,{step:1},'illustrative');
+  add2('blockShare','Share of avoided crashes that cause a slowdown episode (%)',60,{step:5});
+  add2('exMin','Excess veh-min per episode per veh/h (INRIX, EB/WB average)',+(((exE+exW)/2).toFixed(1)),{step:0.5},hasIX?'from INRIX':'illustrative');
+  add2('votCar','Value of time, car ($/veh-h)',20,{step:1});
+  add2('votTruck','Value of time, truck ($/veh-h)',35,{step:1});
+  add2('actDays','Weather activation days / yr',hasC?Math.round(C.period.per_year_adverse):90,{step:1},hasC?'from climate':'illustrative');
+  add2('actHours','Active hours per activation day',6,{step:1},'illustrative');
+  add2('redSpeed','Typical reduced limit when active (mph)',50,{step:5});
+  add2('compliance','Speed reduction actually realised (% of posted drop)',60,{step:5});
+  add2('ttLen','Trip length within VSL section (mi)',hasIX?IX.dir_miles.E:13.5,{step:0.5});
+  tt.append(inp2);
+  const out2=h('div',{class:'grid g3',style:'margin-top:10px'}); tt.append(out2);
+  function ttCalc(){
+    const v={}; for(const k in G) v[k]=+G[k].value;
+    const avoided=window._bcAvoided||0;
+    const vot=(v.votCar*(100-v.truck)+v.votTruck*v.truck)/100;
+    const delayInc=v.exMin*v.vph/60; // veh-h per episode
+    const vehHrsSaved=avoided*v.blockShare/100*delayInc;
+    const incBenefit=vehHrsSaved*vot;
+    const vehActive=v.aadt/24*v.actHours*v.actDays;
+    const realised=COR.posted_speed_mph-(COR.posted_speed_mph-v.redSpeed)*v.compliance/100;
+    const extraH=v.ttLen/realised - v.ttLen/COR.posted_speed_mph;
+    const vehHrsCost=vehActive*Math.max(0,extraH);
+    const cost=vehHrsCost*vot;
+    out2.innerHTML='';
+    out2.append(tile(fmt(delayInc)+' veh-h','Delay per slowdown episode',`${v.exMin} excess veh-min per veh/h × ${fmt(v.vph)} veh/h ÷ 60`), tile(fmt(vehHrsSaved)+' veh-h / yr','Incident delay avoided',`${fmt(avoided*v.blockShare/100,1)} episodes avoided per year`), tile(money(incBenefit),'Value of delay avoided',`blended VOT ${money(vot)}/h`), tile(fmt(vehHrsCost)+' veh-h / yr','Added travel time while active',`+${fmt(extraH*60,1)} min per trip at ${fmt(realised,0)} mph realised, ${fmt(vehActive)} trips/yr exposed`), tile(money(cost),'Cost of added travel time','only while a reduced limit is posted'), tile(money(incBenefit-cost),'Net annual travel-time effect', incBenefit-cost>=0?'positive':'negative at these inputs'));
+  }
+  root.append(tt);
+  calc();
+
+  root.append(h('div',{class:'card',style:'margin-top:14px'}, h('h3',{},'Reading these numbers'), h('ul',{class:'tight'},
+    h('li',{},'The safety case is the primary justification; CDOT applies a conservative 20% reduction to crashes in the conditions the system addresses and still requires B/C > 1.0 (their examples: 2.34 weather-based on I-70 Vail Pass, 7.02 flow-based on I-25). Published evaluations of weather-responsive VSLs report reductions from roughly 10% to over 30%; the sensitivity table brackets that range.'),
+    h('li',{},'The adverse-condition crash set is only the weather scenarios. Incident-queue protection (S5) and work zones (S6) address further crashes that are not in the default numerator; add them once the incident log allows attribution.'),
+    h('li',{},'The crash section (MP 4 to 11) is shorter than the INRIX section (MP 0 to 13.4); the per-mile cost uses the crash-section length so benefits and costs match. Re-run with the full extract when Pohatcong and Union townships are added.'),
+    h('li',{},'The travel-time calculation shows the trade: a weather VSL deliberately adds a few minutes to trips in bad weather and recovers that many times over by preventing a single lane-blocking crash. The INRIX excess-minute figure is measured; the hourly volume is not yet.'),
+    h('li',{},'Day-based exposure overstates activation time because a "wet day" may be wet for two hours. The hourly weather pull (ASOS) will convert days to hours; the "active hours per day" input is the placeholder for that conversion.'))));
+})();
+
+/* ------------------------------------------------------------------ */
+/* TAB 5: method                                                        */
+/* ------------------------------------------------------------------ */
+(function(){
+  const root=$('#panel-method');
+  root.append(h('h2',{},'Method, assumptions and sources'));
+  const g=h('div',{class:'grid g2'});
+  g.append(h('div',{class:'card'}, h('h3',{},'Daily weather classes'), h('p',{},'Each day in the area composite gets one class, the most severe that applies:'), h('ul',{class:'tight'}, CLS.map(c=>h('li',{}, h('i',{style:`display:inline-block;width:10px;height:10px;border-radius:2px;background:${clsColor(c.id)};margin-right:6px`}), c.label))), h('p',{class:'muted'},'"Area mean" averages the stations that pass the coverage gate for that variable; "any station" uses the daily maximum across all 17 stations, the better proxy for the worst spot on a corridor with 150 m of relief. Thresholds live in scripts/build_dashboard.py.')));
+  g.append(h('div',{class:'card'}, h('h3',{},'Crash processing'), h('ul',{class:'tight'},
+    h('li',{},'Route 78 rows only (routenumber = 78) from the municipality extract; mileposts above 20 treated as unknown.'),
+    h('li',{},'Severity = highest injury severity rating (KABCO). Injury crashes = K+A+B+C.'),
+    h('li',{},'Adverse = surface Wet / Snowy / Icy / Slush / Water or weather Rain / Snow / Fog / Sleet / Freezing rain (CDOT 3.1.1).'),
+    h('li',{},'Truck-involved = any unit with a truck vehicle type or GVWR > 26,001 lb (Vehicle table).'),
+    h('li',{},'Contributing factors from the Unit table (Factor 1 / Factor 2).'),
+    h('li',{},'Secondary = same direction, within 2 h after and 0 to 3 mi upstream of a prior crash (approximation).'),
+    h('li',{},'Injuries per mile per year = (injuries + fatalities) ÷ section length (0.5th to 99.5th percentile milepost span) ÷ years.'),
+    h('li',{},'No person-level data is used; the Person table is not read.'))));
+  g.append(h('div',{class:'card'}, h('h3',{},'INRIX processing'), h('ul',{class:'tight'},
+    h('li',{},'24 TMC segments (12 per direction), 5-minute speed and travel time, 2021-2025 (12.6 M rows).'),
+    h('li',{},'Corridor travel time per 5-min stamp = sum of segment travel times (scaled when ≤ 20% of mileage is missing); corridor speed = miles ÷ travel time.'),
+    h('li',{},'Free-flow travel time from the INRIX reference speed per segment: EB '+(hasIX?IX.ff_tt_min.E:'–')+' min, WB '+(hasIX?IX.ff_tt_min.W:'–')+' min.'),
+    h('li',{},'TTI = mean ÷ free-flow; PTI = 95th percentile ÷ free-flow, by month.'),
+    h('li',{},'Slowdown episode = any segment below 35 mph for 15 min or more (gaps of one bin allowed). Excess travel time per episode is summed over bins in minutes per vehicle and expressed per 1 veh/h of flow.'),
+    h('li',{},'Daily tables are joined to the climate classes by date and to crash days by date.'))));
+  g.append(h('div',{class:'card'}, h('h3',{},'CDOT algorithm, as used here'), h('ul',{class:'tight'},
+    h('li',{},'Dry braking distance: D = S² ÷ (30 × Cf), Cf = 0.82 for dry pavement (CDOT Eq. 1).'),
+    h('li',{},'Friction and grade: Cfg = Cf − downgrade (Eq. 2); speed to hold D: S = √(30 × D × Cfg), rounded to 5 mph (Eq. 3).'),
+    h('li',{},'Visibility: minimum acceptable = 2.5 × 1.47 × S + S² ÷ (30 × Cfg) (Eq. 5); lower S by 5 mph until observed visibility meets it.'),
+    h('li',{},'Flow-based: speed = (inflection flow × speed at inflection) ÷ observed flow, 6-min running average (Ch. 4.2).'),
+    h('li',{},'Queue-based: downstream mean speed + 5, rounded up; evaluated every 30 s, posted as often as once a minute (Ch. 4.2.1).'),
+    h('li',{},'Transition: each upstream zone at most 10 mph above the next downstream zone (Ch. 4.1.1).'),
+    h('li',{},'Timing: lower as fast as 1 min, raise no faster than every 6 min; RWIS updates on a 10-min cycle (Ch. 4.3).'),
+    h('li',{},'Feasibility and B/C: 20% crash reduction, 20-yr life, $500k/mi weather-based and $1M/mi flow-based, crash costs $11,100 / $101,800 / $1,820,600 (Ch. 2 and 3).'))));
+  g.append(h('div',{class:'card'}, h('h3',{},'Statistical tests (Tab 3)'), h('ul',{class:'tight'},
+    h('li',{}, h('b',{},'Daily panel: '), 'one row per calendar day joining the climate composite (weather class, precipitation, snow, temperature), the mainline crash counts (all, injury, truck, adverse-coded) and the INRIX daily corridor summaries (mean speed, hours with any segment below 35 mph, 95th-percentile travel time, slowdown episodes).'),
+    h('li',{}, h('b',{},'Rate ratios: '), 'crashes per day in a weather class divided by crashes per dry day; 95% confidence interval from the log-rate-ratio normal approximation (SE = sqrt(1/n1 + 1/n0)); per-class rates carry exact Poisson (Garwood) intervals. A chi-square goodness-of-fit test asks whether crashes split across classes in proportion to days.'),
+    h('li',{}, h('b',{},'Poisson regression: '), 'daily crash count on weather-class dummies with weekday, month and a linear year trend as controls, fitted by iteratively reweighted least squares. Standard errors are scaled by the Pearson dispersion when it exceeds 1 (quasi-Poisson), so over-dispersion does not overstate significance. A second model swaps the classes for continuous drivers (precipitation, snowfall, snow depth, minimum temperature).'),
+    h('li',{}, h('b',{},'Speed and delay by class: '), 'Kruskal-Wallis across the seven classes, then Mann-Whitney U for each class against dry days with Cliff\'s delta as the effect size (−1 to 1; |0.15| small, |0.33| medium, |0.47| large) and a Welch t-test on the means for reference. Share of days with any slowdown uses a two-proportion chi-square.'),
+    h('li',{}, h('b',{},'Correlations: '), 'Spearman rank correlation (robust to skewed daily totals and zero-inflated counts) across all panel variables, with Pearson r in the table view; lagged correlations (0 to 2 days) check for carry-over effects such as snow cover; monthly correlations use 60 month-aggregates.'),
+    h('li',{}, h('b',{},'Caveats: '), 'daily weather classes are coarse (a wet day may be wet for two hours), the crash extract covers 7.2 of 13.4 miles, exposure is days not vehicle-miles (no volumes yet), and the tests describe association, not causation. Significance is reported at p < 0.05 without multiple-comparison correction; with about 60 tests a few false positives are expected, so weight the adjusted model and the confidence intervals over single p-values.'))));
+  g.append(h('div',{class:'card'}, h('h3',{},'Data in the repository'), h('ul',{class:'tight'},
+    h('li',{}, h('b',{},'Climate: '), hasC?`${C.source}; ${C.stations.length} stations within 8 mi, ${C.period.start} to ${C.period.end}.`:'awaiting'),
+    h('li',{}, h('b',{},'NJ crashes: '), hasCR?CR.source+'.':'awaiting'),
+    h('li',{}, h('b',{},'INRIX: '), hasIX?IX.source+'.':'awaiting'),
+    h('li',{}, h('b',{},'Work zones: '), DATA.workzones.status==='loaded'?'loaded':'awaiting; crashes coded "Construction Zone" are the interim proxy.'),
+    h('li',{}, h('b',{},'Corridor configuration: '), 'config/corridor.json (centerline from INRIX segment end points; zones, grades and the summit location are placeholders).'),
+    h('li',{}, h('b',{},'Reference: '), 'Colorado DOT, Variable Speed Limits Guidelines, October 2023 (Ref/).'))));
+  g.append(h('div',{class:'card'}, h('h3',{},'Next data pulls, in priority order'), h('ol',{class:'steps'},
+    h('li',{},'Crash extract for Pohatcong Twp (Warren) and Union Twp (Hunterdon) to complete MP 0-3.7 and 10.4-13.'),
+    h('li',{},'Hourly ASOS for KABE (Lehigh Valley) and KSMQ (Somerset): visibility, precipitation type, wind; converts weather days to hours and quantifies fog.'),
+    h('li',{},'NJDOT count-station volumes near MP 2, 5 and 12 for vphpl, truck share and vehicle-hours of delay.'),
+    h('li',{},'NJSP CAD or OpenReach incident log to attribute the INRIX slowdown episodes.'),
+    h('li',{},'Straight Line Diagram or LiDAR profile for grades per zone; lane-closure log for work zones.'))));
+  root.append(g);
+  root.append(h('div',{class:'card',style:'margin-top:14px'}, h('h3',{},'Rebuilding this page'), h('p',{},'Drop new data under Input Data/, then run from the repo root:'), h('pre',{style:'background:var(--surface-2);padding:8px 10px;border-radius:6px;font-size:.85rem'},'python -I scripts/preprocess_inrix.py   # only when INRIX files change\npython -I scripts/build_dashboard.py'), h('p',{class:'muted'},'The build writes I78_VSL_Dashboard.html (this file) and dashboard/data/dashboard_data.json.')));
+})();
+
+/* restore tab */
+(function(){ let t=null; try{ t=localStorage.getItem('i78-tab'); }catch(e){} if(t && $('#panel-'+t)) activateTab(t); })();
+</script>
+</body>
+</html>

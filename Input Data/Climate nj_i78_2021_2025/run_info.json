@@ -1,0 +1,32 @@
+{
+  "run_date": "2026-11-04",
+  "start": "2021-01-01",
+  "end": "2025-12-31",
+  "backend": "ncei",
+  "datatypes": [
+    "PRCP",
+    "SNOW",
+    "SNWD",
+    "TMAX",
+    "TMIN"
+  ],
+  "buffer_miles": 8.0,
+  "min_coverage": 0.5,
+  "require": null,
+  "source": "kmz",
+  "areas": [
+    {
+      "area": "I-78",
+      "slug": "i_78",
+      "stations": 17,
+      "rows": 26231,
+      "search_bbox": {
+        "north": 40.78835073677489,
+        "south": 40.51899652386306,
+        "east": -74.81519931360235,
+        "west": -75.29797737312514
+      },
+      "output": "output\\nj_i78_2021_2025\\i_78"
+    }
+  ]
+}

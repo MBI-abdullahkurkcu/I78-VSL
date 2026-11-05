@@ -1,0 +1,2 @@
+days_with_data,prcp_total_in_area_mean,prcp_days_ge_0.5_any_station,prcp_days_ge_1_any_station,prcp_max_in_any_station,snow_total_in_area_mean,snow_days_ge_0.1_area_mean,snow_days_ge_1_any_station,snow_days_ge_3_any_station,snow_days_ge_6_any_station,snow_max_in_any_station,snow_max_date,snwd_max_in_any_station,tmax_mean_f,tmax_max_f,tmin_mean_f,tmin_min_f,freeze_days_tmin_le_32_area_mean,freeze_thaw_days_area_mean
+1826,253.83,269,126,7.31,113.8,64,44,19,7,19.0,2021-02-02,24.0,63.8,99.0,42.8,-2.0,578,497

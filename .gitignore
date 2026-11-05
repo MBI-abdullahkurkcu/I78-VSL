@@ -1,0 +1,13 @@
+# Raw INRIX 5-minute files are ~830 MB; keep them out of git (re-pull from INRIX / RITIS)
+Input Data/INRIX*/*5-Minutes*.csv
+# NJDOT crash extract contains person-level fields (names, plates, licence data); never commit it
+Input Data/Crash_2021_2025/
+# 53 MB intermediate produced by scripts/preprocess_inrix.py (rebuildable)
+dashboard/data/inrix_corridor_5min.csv
+# Python
+__pycache__/
+*.pyc
+# Editor / OS
+.vscode/
+.DS_Store
+Thumbs.db
