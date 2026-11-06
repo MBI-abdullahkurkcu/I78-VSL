@@ -528,7 +528,7 @@ function activateTab(name){
   $$('#tabs button').forEach(b=>b.setAttribute('aria-selected', b.dataset.tab===name?'true':'false'));
   $$('.panel').forEach(p=>p.classList.toggle('active', p.id==='panel-'+name));
   try{ localStorage.setItem('i78-tab',name);}catch(e){}
-  if (name==='map') setTimeout(()=>{ if (MAPVIEW.v==='inrix' && INRIX_MAP_SRC) ensureInrixFrame(); else if (window._map) window._map.invalidateSize(); else initMap(); }, 50);
+  if (name==='map') setTimeout(()=>{ if (MAPVIEW.v==='inrix' && INRIX_MAP_SRC) ensureInrixFrame(); else showMainMap(); }, 50);
   setTimeout(rerenderAll, 0);
 }
 $$('#tabs button').forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tab)));
@@ -862,7 +862,7 @@ function avgMonthly(k){ if(!hasIX) return null; const m=IX.monthly.map(r=>r[k]).
 /* ------------------------------------------------------------------ */
 /* TAB 2: map with all datasets                                        */
 /* ------------------------------------------------------------------ */
-const MAPVIEW = {v:'all'}; try{ if(localStorage.getItem('i78-mapview')==='inrix') MAPVIEW.v='inrix'; }catch(e){}
+const MAPVIEW = {v:'inrix'}; try{ if(localStorage.getItem('i78-mapview')==='all') MAPVIEW.v='all'; }catch(e){}
 const MAPF = {basemap:'esri', metric:'p_lt50', year:'all', sev:'all', cls:'all', dir:'all', truck:false, wz:false, sec:false, adv:false, crashmode:'points', ccolor:'sev', opacity:0.5};
 const CRASH_COLOR_MODES={sev:'Severity (KABCO)', cls:'Weather class of the day', surface:'Surface condition', truck:'Truck involvement', type:'Crash type'};
 const BASEMAPS = {
@@ -958,7 +958,8 @@ function initMap(){
   overlays['Candidate RWIS sites']=rwis;
   L.control.layers(null, overlays, {collapsed:false}).addTo(map);
   L.control.scale({imperial:true, metric:false}).addTo(map);
-  map.fitBounds(L.latLngBounds(COR.centerline).pad(0.25));
+  window._mapBounds=L.latLngBounds(COR.centerline).pad(0.25); window._mapSized = el.clientWidth>0;
+  map.fitBounds(window._mapBounds);
   map.whenReady(()=>setTimeout(()=>map.invalidateSize(),100));
 }
 function toggleFullscreen(force){
@@ -992,7 +993,15 @@ function setMapView(v){
   const w=$('#inrixwrap'); if(w) w.style.display = ix ? 'block' : 'none';
   const n=$('#map-ixnote'); if(n) n.style.display = ix ? '' : 'none';
   if(ix){ if($('#panel-map').classList.contains('active')) ensureInrixFrame(); }
-  else setTimeout(()=>{ if(window._map) window._map.invalidateSize(); else initMap(); }, 50);
+  else setTimeout(showMainMap, 50);
+}
+/* Create or refresh the all-datasets map, but only while it is actually visible: a Leaflet map created in a hidden
+   container gets a 0x0 size and ends up at world zoom. If that happened anyway, refit once it has a size. */
+function showMainMap(){
+  const el=$('#mapdiv'); if(!el || el.clientWidth===0) return;
+  if(!window._map){ initMap(); return; }
+  window._map.invalidateSize();
+  if(!window._mapSized){ window._mapSized=true; window._map.fitBounds(window._mapBounds); }
 }
 
 /* segment click: travel-time distribution panel ---------------------- */
@@ -1069,9 +1078,10 @@ const RWIS_SITES=[
   const chk=(label,key)=>{ const c=h('input',{type:'checkbox'}); c.checked=MAPF[key]; c.addEventListener('change',()=>{ MAPF[key]=c.checked; refreshCrashLayers(); rerenderAll(); }); return h('label',{}, c, label); };
   const years=hasCR?ST.years.map(y=>[String(y),String(y)]):[];
   const hasIXmap = hasIX && !!INRIX_MAP_SRC;
+  if (!hasIXmap) MAPVIEW.v='all';
   if (hasIXmap){
     const vb=(v,label)=>{ const b=h('button',{type:'button',class:'mapbtn','data-view':v,'aria-pressed':'false'},label); b.addEventListener('click',()=>setMapView(v)); return b; };
-    root.append(h('div',{class:'filters mapview',id:'map-view'}, h('span',{},'Map view'), vb('all','All datasets'), vb('inrix','INRIX travel time (full-page map, embedded)'),
+    root.append(h('div',{class:'filters mapview',id:'map-view'}, h('span',{},'Map view'), vb('inrix','INRIX travel time'), vb('all','All datasets (crashes, weather, zones)'),
       (()=>{ const b=h('button',{type:'button',class:'mapbtn map-fullbtn'},'Full screen'); b.addEventListener('click',()=>toggleFullscreen()); return b; })(),
       h('a',{class:'mapbtn',href:'I78_INRIX_Map.html',target:'_blank',style:'text-decoration:none'},'Open INRIX map in a new tab ↗')));
   }
