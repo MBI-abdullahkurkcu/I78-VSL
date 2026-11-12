@@ -46,7 +46,8 @@ html,body{margin:0;padding:0}
 body{background:var(--page);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 a{color:var(--accent)}
 h1,h2,h3,h4{margin:0 0 .4em;line-height:1.25}
-h1{font-size:1.5rem;font-weight:650}
+h1{font-size:1.35rem;font-weight:650}
+@media (min-width:860px){ header.top h1{white-space:nowrap} }
 h2{font-size:1.25rem;font-weight:650;margin-top:.2em}
 h3{font-size:1.05rem;font-weight:650}
 h4{font-size:.95rem;font-weight:650;color:var(--ink-2)}
@@ -54,9 +55,10 @@ p{margin:.3em 0 .8em}
 small,.muted{color:var(--muted)}
 code{font-size:.85em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
 .wrap{max-width:1380px;margin:0 auto;padding:0 16px 48px}
-header.top{position:sticky;top:0;z-index:1200;background:var(--page);border-bottom:1px solid var(--border);padding:12px 0 0}
+header.top{position:sticky;top:0;z-index:1200;background:var(--page);border-bottom:1px solid var(--border);padding:10px 0 0}
 .top-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px 20px}
-.top-row .title{flex:1 1 320px}
+.top-row .title{flex:1 1 auto;min-width:0}
+.top-row .chips{flex:0 1 auto;margin-top:4px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:.78rem;border:1px solid var(--border);background:var(--surface);color:var(--ink-2)}
 .chip .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
@@ -75,7 +77,7 @@ button.chip .more{color:var(--muted);font-size:.7rem}
 .modal .stat .v{font-size:1.45rem}
 @media (max-width:640px){ .modal{padding:14px} .modal-bg{padding:12px 8px} .modal .kv{grid-template-columns:1fr} }
 .dot.good{background:var(--good)} .dot.warn{background:var(--warn)} .dot.critical{background:var(--critical)} .dot.neutral{background:var(--muted)}
-nav.tabs{display:flex;gap:2px;overflow-x:auto;margin-top:10px}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;margin-top:6px}
 nav.tabs button{appearance:none;background:none;border:0;border-bottom:2px solid transparent;color:var(--ink-2);padding:10px 14px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
 nav.tabs button:hover{color:var(--ink)}
 nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
@@ -89,6 +91,9 @@ nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(-
 .g2{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
 .g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.g2x{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
+@media (min-width:760px){ .g2x{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (min-width:900px){ .g4{grid-template-columns:repeat(4,minmax(0,1fr))} }
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:var(--shadow);min-width:0}
 .card.full{grid-column:1/-1}
 .card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
@@ -123,8 +128,9 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .badge.crit{background:rgba(208,59,59,.14);color:var(--ink)}
 ul.tight{margin:.2em 0 .6em 1.2em;padding:0} ul.tight li{margin:.15em 0}
 .map{height:calc(100vh - 150px);min-height:520px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
-.map.fullscreen{position:fixed;inset:0;height:100vh;min-height:0;z-index:2500;border-radius:0;border:0}
-#inrixwrap{display:none;position:relative}
+.map.fullscreen{position:fixed !important;inset:0;height:100vh;min-height:0;z-index:2500;border-radius:0;border:0} /* !important: Leaflet writes position:relative inline on its container */
+#inrixwrap{display:none}
+#inrixwrap.fullscreen{position:fixed;inset:0;height:100vh;min-height:0;z-index:2500;border-radius:0;border:0}
 #inrixwrap iframe{width:100%;height:100%;border:0;display:block;background:var(--surface-2)}
 .mapview .mapbtn[aria-pressed="true"]{border-color:var(--ink);font-weight:600;background:var(--surface-2)}
 .mapbtn{appearance:none;font:inherit;font-size:.82rem;border:1px solid var(--border);background:var(--surface);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer}
@@ -550,8 +556,9 @@ $$('#data-subtabs button').forEach(b=>b.addEventListener('click',()=>activateSub
   $('#subtitle').textContent = parts.join(' · ');
   const chips=$('#status-chips');
   const st=(k,label)=>{ const d=DATA[k]; const ok=d&&d.status==='loaded'; const part=d&&d.status==='found_unparsed';
-    chips.append(h('button',{type:'button',class:'chip',title:'Show files and statistics for this dataset',onclick:()=>showDataset(k,label)}, h('i',{class:'dot '+(ok?'good':part?'warn':'neutral')}), label+': '+(ok?'loaded':part?'folder found, parser pending':'awaiting data'), h('span',{class:'more'},'▸'))); };
-  st('climate','Climate'); st('inrix','INRIX travel times'); st('crashes','NJ crashes'); st('workzones','Work zones');
+    const status = ok?'loaded':part?'folder found, parser pending':'awaiting data';
+    chips.append(h('button',{type:'button',class:'chip',title:label+': '+status+'. Click for the files and statistics of this dataset.',onclick:()=>showDataset(k,label)}, h('i',{class:'dot '+(ok?'good':part?'warn':'neutral')}), ok?label:label+' · '+status, h('span',{class:'more'},'▸'))); };
+  st('climate','Climate'); st('inrix','INRIX'); st('crashes','NJ crashes'); st('workzones','Work zones');
 })();
 
 /* ------------------------------------------------------------------ */
@@ -791,7 +798,7 @@ function avgMonthly(k){ if(!hasIX) return null; const m=IX.monthly.map(r=>r[k]).
     tile(es.E?fmt(es.E.total_excess_veh_min_per_vph/es.E.n,1):'–','EB excess minutes per episode, per veh/h','× hourly volume ÷ 60 = vehicle-hours of delay per episode'),
     tile(es.W?fmt(es.W.total_excess_veh_min_per_vph/es.W.n,1):'–','WB excess minutes per episode, per veh/h','same unit; multiply by volume once counts are loaded'));
   root.append(tiles);
-  const g=h('div',{class:'grid g2',style:'margin-top:14px'});
+  const g=h('div',{class:'grid g2x',style:'margin-top:14px'});
   const prof=(d,dt)=>IX.hourly_profile.filter(r=>r.dir===d&&r.daytype===dt).sort((a,b)=>a.hour-b.hour);
   chartCard(g,{title:'Weekday corridor speed by hour', sub:'Mean corridor speed (length-weighted); flat profile = no recurring congestion', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
     render:el=>lineChart(el,{x:HOURS, series:[{name:'EB mph',var:'--s1',values:prof('E','weekday').map(r=>r.speed)},{name:'WB mph',var:'--s2',values:prof('W','weekday').map(r=>r.speed)}], yMin:50, yMax:75, xTicks:[0,4,8,12,16,20,23], yFmt:v=>fmt(v)+' mph'}),
@@ -830,7 +837,7 @@ function avgMonthly(k){ if(!hasIX) return null; const m=IX.monthly.map(r=>r[k]).
     tile(fmt(py.snow_lt+py.snow_sig+py.snow_maj,0)+' days/yr','Snow days (≥ 0.1 in)',`${fmt(py.snow_sig+py.snow_maj,0)} with ≥ 1 in; ${fmt(py.snow_maj,0)} with ≥ 3 in`),
     tile(fmt(py.freezing,0)+' days/yr','Freezing precipitation / black-ice risk','precip with Tmin ≤ 32 °F and little snow'));
   root.append(tiles);
-  const g=h('div',{class:'grid g2',style:'margin-top:14px'});
+  const g=h('div',{class:'grid g2x',style:'margin-top:14px'});
   chartCard(g,{title:'Weather-condition calendar', sub:'Every day colored by its condition class; the day-level footprint of a weather-based VSL', full:true, legend:CLS.map(c=>({name:CLS_SHORT[c.id],var:CLS_VAR[c.id]})),
     render:el=>calendarStrip(el,D),
     table:{columns:['Date','Class','Rain mean (in)','Rain max (in)','Snow max (in)','Snow depth (in)','Tmin °F','Tmax °F'], rows:D.date.map((d,i)=>D.cls[i]>0?[d,CLS_SHORT[D.cls[i]],fmt(D.prcp_mean[i],2),fmt(D.prcp_max[i],2),fmt(D.snow_max[i],1),fmt(D.snwd_max[i],1),fmt(D.tmin[i]),fmt(D.tmax[i])]:null).filter(Boolean), numeric:[0,0,1,1,1,1,1,1]}});
@@ -966,8 +973,9 @@ function toggleFullscreen(force){
   const ix = MAPVIEW.v==='inrix';
   const el = ix ? $('#inrixwrap') : $('#mapdiv'); if(!el) return; const on = force===undefined ? !el.classList.contains('fullscreen') : force;
   el.classList.toggle('fullscreen', on); $$('.map-fullbtn').forEach(b=>{ b.textContent = on ? 'Exit full screen (Esc)' : 'Full screen'; });
-  if (on && !el.querySelector('.map-exit')){ const x=h('button',{type:'button',class:'mapbtn map-exit',style: ix ? 'position:absolute;top:8px;right:12px;z-index:1000' : 'position:absolute;top:10px;left:56px;z-index:1000'},'Exit full screen'); x.addEventListener('click',()=>toggleFullscreen(false)); el.append(x); }
+  if (on && !ix && !el.querySelector('.map-exit')){ const x=h('button',{type:'button',class:'mapbtn map-exit',style:'position:absolute;top:10px;left:56px;z-index:1000'},'Exit full screen'); x.addEventListener('click',()=>toggleFullscreen(false)); el.append(x); }
   if (!on){ const x=el.querySelector('.map-exit'); if(x) x.remove(); }
+  inrixCall(w=>{ const b=w.document.getElementById('btnFull'); if(b) b.textContent = on ? 'Exit full screen (Esc)' : 'Full screen'; });
   document.body.style.overflow = on ? 'hidden' : '';
   setTimeout(()=>{ if(window._map) window._map.invalidateSize(); inrixCall(w=>w.__inrix.map.invalidateSize()); }, 60);
 }
@@ -1073,7 +1081,7 @@ const RWIS_SITES=[
   {id:'E', mp:12.5, name:'Perryville / Exit 12', why:'Co-located with NJSP Perryville Station; east-end reference for the transition back to 65 mph.'}];
 (function(){
   const root=$('#panel-map');
-  root.append(h('h2',{},'Map: every dataset on one corridor'), h('p',{}, 'VSL zones, interchanges, INRIX segment performance, slowdown hot spots, geocoded crashes (filterable), 0.5-mile crash density, NOAA weather stations and candidate RWIS sites. Toggle layers in the control at the top right; use the filters to subset the crash layers. Only the background tiles need the network: if a provider is blocked on your network, pick another basemap or the schematic mode. Click an INRIX segment to open its travel-time distribution below the map. Segment geometry: '+(hasIX?IX.geometry_source:'n/a')+'.'));
+  root.append(h('h2',{},'Map'), h('p',{}, h('b',{},'INRIX travel time: '),'segments colored by travel-time index, planning-time index, speed or slowdown share, by day type and 15-minute time of day; edit the class limits in the legend and click a segment for its distribution. ', h('b',{},'All datasets: '),'VSL zones, interchanges, INRIX segment performance, slowdown hot spots, geocoded crashes (filterable), 0.5-mile crash density, NOAA weather stations and candidate RWIS sites, with the layer control at the top right. Only the background tiles need the network. Segment geometry: '+(hasIX?IX.geometry_source:'n/a')+'.'));
   const sel=(id,label,opts,key,onchange)=>{ const s_=h('select',{id}); opts.forEach(([v,l])=>s_.append(h('option',{value:v},l))); s_.value=MAPF[key]; s_.addEventListener('change',()=>{ MAPF[key]=s_.value; onchange(); }); return h('label',{}, label, s_); };
   const chk=(label,key)=>{ const c=h('input',{type:'checkbox'}); c.checked=MAPF[key]; c.addEventListener('change',()=>{ MAPF[key]=c.checked; refreshCrashLayers(); rerenderAll(); }); return h('label',{}, c, label); };
   const years=hasCR?ST.years.map(y=>[String(y),String(y)]):[];
@@ -1150,7 +1158,7 @@ function buildStats(root){
   sum.append(h('ul',{class:'tight'}, items), h('p',{class:'muted'},'* marks p < 0.05. Exposure is days, not vehicle-miles; see Tab 6 for the methods and caveats.'));
   root.append(sum);
 
-  const g=h('div',{class:'grid g2',style:'margin-top:14px'});
+  const g=h('div',{class:'grid g2x',style:'margin-top:14px'});
   // ---- rate ratio chart
   if (S.rate_ratios){ const A=S.rate_ratios.all.rows, I=(S.rate_ratios.injury||{}).rows||[], T=(S.rate_ratios.truck||{}).rows||[];
     chartCard(g,{title:'Crash rate ratio by weather class of the day, with 95% confidence intervals', sub:'Crashes per day in the class ÷ crashes per dry day (log scale). An interval that excludes 1 is statistically significant.', legend:[{name:'All crashes',var:'--s1'},{name:'Injury crashes',var:'--s2'},{name:'Truck-involved',var:'--s3'}],

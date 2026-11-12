@@ -46,7 +46,7 @@ body.embedded header a,body.embedded #btnTheme{display:none}
 #wrap{position:relative;flex:1 1 auto;min-height:0}
 #map{position:absolute;inset:0;background:var(--surface-2)}
 .leaflet-container{font:inherit}
-#hint{position:absolute;left:10px;bottom:10px;background:var(--surface);color:var(--ink-2);font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);pointer-events:none;z-index:600;max-width:60%}
+#hint{position:absolute;left:10px;bottom:34px;background:var(--surface);color:var(--ink-2);font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);pointer-events:none;z-index:600;max-width:60%}
 /* legend */
 #legend{position:absolute;left:10px;top:86px;z-index:700;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:8px 10px;min-width:230px;font-size:12px}
 #legend h3{margin:0 0 4px;font-size:12.5px;font-weight:650}
@@ -114,6 +114,7 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
   <label>Basemap <select id="fBase"><option value="esri">Esri streets</option><option value="esrigray">Esri light gray</option><option value="esritopo">Esri topographic</option><option value="esriimg">Esri imagery</option><option value="none">None</option></select></label>
   <label>Opacity <input type="range" id="fOpacity" class="short" min="10" max="100" value="60" step="5"></label>
   <button id="btnTheme" type="button">Theme: auto</button>
+  <button id="btnFull" type="button" style="display:none" title="fill the browser window">Full screen</button>
 </div>
 <div id="wrap">
   <div id="map"></div>
@@ -151,7 +152,7 @@ function niceTicks(min,max,n=5){ if(max===min) max=min+1; const span=max-min, st
 
 // ------------------------------------------------------------ theme
 const EMBEDDED=(()=>{ try{ return window.self!==window.top; }catch(e){ return true; } })();
-if(EMBEDDED) document.body.classList.add('embedded');
+if(EMBEDDED){ document.body.classList.add('embedded'); const bf=$('btnFull'); bf.style.display=''; bf.addEventListener('click',()=>{ try{ window.parent.toggleFullscreen(); }catch(e){} }); }
 (function(){ const btn=$('btnTheme'); const order=['auto','light','dark']; let cur='auto'; try{ cur=localStorage.getItem('i78-inrix-theme')||'auto'; }catch(e){}
   if(EMBEDDED){ try{ cur=window.parent.document.documentElement.getAttribute('data-theme')||'auto'; }catch(e){} }
   window.__applyTheme=function(t){ cur=t||'auto'; apply(); recolor(); if(pinId) showPanel(pinId); }; const apply=()=>{ if(cur==='auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme',cur); btn.textContent='Theme: '+cur; }; apply(); btn.addEventListener('click',()=>{ cur=order[(order.indexOf(cur)+1)%3]; try{ localStorage.setItem('i78-inrix-theme',cur);}catch(e){} apply(); recolor(); if(pinId) showPanel(pinId); }); })();
@@ -198,7 +199,7 @@ T.forEach(t=>{ const ll=t.geom.map(c=>[c[0]+OFF(t),c[1]]);
   casing.set(t.tmc,c); lines.set(t.tmc,l); c.addTo(map); l.addTo(map); });
 map.on('zoomend',()=>{ const w=weightForZoom(map.getZoom()); lines.forEach((l,k)=>{ const sel=k===pinId; l.setStyle({weight:sel?w*1.6:w}); casing.get(k).setStyle({weight:(sel?w*1.6:w)+3}); }); });
 map.on('click',()=>unpin());
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') unpin(); });
+document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; if(pinId) unpin(); else if(EMBEDDED){ try{ window.parent.toggleFullscreen(false); }catch(x){} } });
 // interchanges
 (DATA.interchanges||[]).forEach(x=>{ L.circleMarker([x.lat,x.lon],{radius:4,color:css('--ink'),fillColor:css('--surface'),fillOpacity:1,weight:1.5,interactive:false}).addTo(map); L.marker([x.lat,x.lon],{icon:L.divIcon({className:'',html:`<span class="ic-label">${x.short}</span>`,iconSize:[60,14],iconAnchor:[30,-6]}),interactive:false}).addTo(map); });
 map.fitBounds(L.latLngBounds(T.flatMap(t=>t.geom)).pad(0.08));
