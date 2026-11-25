@@ -239,6 +239,7 @@ ul.tight{margin:.2em 0 .6em 1.2em;padding:0} ul.tight li{margin:.15em 0}
     <button role="tab" data-tab="scen">4 · Key Scenarios</button>
     <button role="tab" data-tab="impact">5 · Potential Impact</button>
     <button role="tab" data-tab="method">6 · Method &amp; Sources</button>
+    <button role="tab" data-tab="signeval">7 · VSL Sign Evaluation</button>
   </nav>
 </div></header>
 
@@ -262,6 +263,7 @@ ul.tight{margin:.2em 0 .6em 1.2em;padding:0} ul.tight li{margin:.15em 0}
 <section class="panel" id="panel-scen"></section>
 <section class="panel" id="panel-impact"></section>
 <section class="panel" id="panel-method"></section>
+<section class="panel" id="panel-signeval"></section>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -1732,6 +1734,212 @@ function buildCalculator(){
     h('li',{},'Straight Line Diagram or LiDAR profile for grades per zone; lane-closure log for work zones.'))));
   root.append(g);
   root.append(h('div',{class:'card',style:'margin-top:14px'}, h('h3',{},'Rebuilding this page'), h('p',{},'Drop new data under Input Data/, then run from the repo root:'), h('pre',{style:'background:var(--surface-2);padding:8px 10px;border-radius:6px;font-size:.85rem'},'python -I scripts/preprocess_inrix.py   # only when INRIX files change\npython -I scripts/build_dashboard.py'), h('p',{class:'muted'},'The build writes I78_VSL_Dashboard.html (this file) and dashboard/data/dashboard_data.json.')));
+})();
+
+/* ------------------------------------------------------------------ *
+ * Tab 7: VSL Sign Evaluation                                          *
+ * Scores each VSL sign on nearby crashes, weather-condition crashes,  *
+ * truck/wz/secondary crashes, and the INRIX slowdown exposure of the  *
+ * segment it sits on. Also flags coverage gaps and overlaps.          *
+ * ------------------------------------------------------------------ */
+(function(){
+  const root=$('#panel-signeval');
+  const assets=(DATA.assets && DATA.assets.folders) || [];
+  const signFolder = assets.find(f=>f.kind==='vsl_sign');
+  const signs = signFolder ? signFolder.features.filter(f=>f.lat!=null) : [];
+  if (!signs.length){ root.append(h('h2',{},'VSL Sign Evaluation'), h('p',{class:'note'},'No VSL sign features are loaded. Drop the KMZ in dashboard/data/KMZs/ and re-run scripts/parse_kmz.py then scripts/build_dashboard.py.')); return; }
+
+  // ---- Snap each sign to the corridor centerline to get its milepost and direction.
+  // Projects each sign's lat/lon onto every segment of COR.centerline, picks the closest, and interpolates the
+  // milepost using COR_CUM (cumulative along-corridor distance).
+  function projectToCorridor(lat, lon){
+    const pts=COR.centerline;
+    // approximate equirectangular distance (good enough for 15 miles of corridor)
+    const latm = 111.0, lonm = 111.0*Math.cos(lat*Math.PI/180);
+    let best={d2:Infinity, mp:0, lat:pts[0][0], lon:pts[0][1]};
+    for(let i=1;i<pts.length;i++){
+      const ax=pts[i-1][1], ay=pts[i-1][0], bx=pts[i][1], by=pts[i][0];
+      const vx=(bx-ax)*lonm, vy=(by-ay)*latm; const wx=(lon-ax)*lonm, wy=(lat-ay)*latm;
+      const vv=vx*vx+vy*vy; let t = vv>0 ? (vx*wx+vy*wy)/vv : 0; t=Math.max(0,Math.min(1,t));
+      const px=ax+(bx-ax)*t, py=ay+(by-ay)*t;
+      const dx=(lon-px)*lonm, dy=(lat-py)*latm; const d2=dx*dx+dy*dy;
+      if(d2<best.d2){ const mp = COR_CUM[i-1] + (COR_CUM[i]-COR_CUM[i-1])*t; best={d2, mp, lat:py, lon:px}; }
+    }
+    best.distMi = Math.sqrt(best.d2) / 1.60934;
+    return best;
+  }
+
+  // Parse direction (EB/WB) from sign name
+  function dirOf(name){ const u=(name||'').toUpperCase(); if(/\bWB\b|\bW\b/.test(u)) return 'W'; if(/\bEB\b|\bE\b/.test(u)) return 'E'; return null; }
+
+  // Build enriched sign list
+  const RADIUS = 0.5; // mi: half-window on each side of the sign
+  const SEV_INJURY = new Set(['K','A','B','C']);
+  const ADVERSE_WEATHER = new Set(['Rain','Snow','Sleet/Hail','Freezing Rain','Fog/Smog/Smoke']);
+  const points = (hasCR ? (CR.points||[]) : []);
+
+  const rows = signs.map(s=>{
+    const proj = projectToCorridor(s.lat, s.lon);
+    const dir = dirOf(s.name);
+    const mp = proj.mp;
+    // crashes within ±RADIUS mi, same direction if the sign is directional
+    const near = points.filter(p => Math.abs(p.mp - mp) <= RADIUS && (!dir || p.dir===dir));
+    const sum = key => near.reduce((a,p)=>a+(p[key]?1:0),0);
+    const inj = near.filter(p=>SEV_INJURY.has(p.sev)).length;
+    const adv = near.filter(p=>p.surface && p.surface!=='Dry' || ADVERSE_WEATHER.has(p.weather)).length;
+    // attribute INRIX slowdown episodes of the segment this sign sits on (same direction, MP range)
+    let tmcEpisodes=0, tmcName=null;
+    if (hasIX && dir){
+      // Find the TMC whose MP range contains mp, in this direction. We don't have mp directly on TMCs,
+      // so approximate: a TMC's midpoint latitude maps back to the corridor at some MP; use geometry.
+      IX.tmcs.forEach(t=>{
+        if (t.dir !== dir) return;
+        const midLat=(t.lat0+t.lat1)/2, midLon=(t.lon0+t.lon1)/2;
+        const pr=projectToCorridor(midLat, midLon);
+        const halfLen=t.miles/2;
+        if (Math.abs(pr.mp - mp) <= halfLen + 0.3){ // allow 0.3 mi slack so adjacent segments are picked up
+          const ep = (IX.worst_tmc_counts||{})[t.tmc] || 0;
+          if (ep > tmcEpisodes){ tmcEpisodes = ep; tmcName = t.name; }
+        }
+      });
+    }
+    return {sign:s, name:s.name||'(unnamed)', dir, mp, snapMi:proj.distMi,
+      n:near.length, inj, truck:sum('truck'), wz:sum('wz'), sec:sum('sec'), adv,
+      tmcEpisodes, tmcName};
+  }).sort((a,b)=>(a.dir||'Z').localeCompare(b.dir||'Z') || a.mp-b.mp);
+
+  // ---- Coverage gaps: for each direction, find 0.5-mi MP bins whose crash count is high but no sign is within 1 mi.
+  const dirOrder=['E','W'];
+  const gaps = [];
+  dirOrder.forEach(d=>{
+    // Build 0.5-mi crash histogram for this direction
+    const binWidth=0.5;
+    const hist={};
+    points.filter(p=>p.dir===d).forEach(p=>{ const b=Math.floor(p.mp/binWidth)*binWidth; hist[b]=(hist[b]||0)+1; });
+    const bins=Object.entries(hist).map(([mp,n])=>({mp:+mp, n})).sort((a,b)=>b.n-a.n);
+    const dSigns = rows.filter(r=>r.dir===d);
+    const nearSign = mp => dSigns.some(r=>Math.abs(r.mp-mp)<=1.0);
+    bins.slice(0,10).forEach(b=>{ if (b.n>=10 && !nearSign(b.mp)) gaps.push({dir:d, mp:b.mp, n:b.n, nearestSignMi: dSigns.length ? Math.min(...dSigns.map(r=>Math.abs(r.mp-b.mp))) : null}); });
+  });
+
+  // ---- Overlaps: pairs of signs within 0.3 mi on the same direction
+  const overlaps = [];
+  for (let i=0;i<rows.length;i++) for (let j=i+1;j<rows.length;j++){
+    if (rows[i].dir && rows[i].dir===rows[j].dir && Math.abs(rows[i].mp-rows[j].mp)<=0.3){
+      overlaps.push({a:rows[i], b:rows[j], gap:Math.abs(rows[i].mp-rows[j].mp)});
+    }
+  }
+
+  // Normalize the sub-scores and build a composite 0-100 score
+  const mx = key => Math.max(1, ...rows.map(r=>r[key]||0));
+  const W={n:1.0, inj:2.0, adv:1.5, truck:1.0, wz:0.8, sec:1.5, tmcEpisodes:1.2};
+  const WS = Object.values(W).reduce((a,b)=>a+b,0);
+  rows.forEach(r=>{ let sc=0; for(const k in W){ sc += (W[k] * (r[k]||0) / mx(k)); } r.score = Math.round(100*sc/WS); });
+
+  // ======= RENDER =======
+  root.append(h('h2',{},'VSL Sign Evaluation'),
+    h('p',{}, 'Scores each of the ', h('b',{},String(signs.length)), ' proposed VSL sign locations on what it would actually see over the five-year extract: crashes within a ', h('b',{},'0.5-mile window'), ' on the same direction, how many were injury / truck / work-zone / adverse-weather / likely-secondary, and the INRIX slowdown episodes of the segment the sign sits on. The composite score is a weighted, normalized 0-100 (injury and adverse-weather crashes count more because those are the headline VSL use cases). Coverage gaps and sign pairs that sit within 0.3 mi of each other are flagged below the table.'));
+
+  // Headline stats
+  const topScore = rows.slice().sort((a,b)=>b.score-a.score)[0];
+  const tiles = h('div',{class:'grid g4',style:'margin:10px 0 18px'});
+  tiles.append(
+    h('div',{class:'card'}, h('div',{class:'stat'}, h('div',{class:'v'},String(signs.length)), h('div',{class:'l'},'Proposed VSL signs'), h('div',{class:'n'},(rows.filter(r=>r.dir==='E').length)+' EB · '+(rows.filter(r=>r.dir==='W').length)+' WB · '+(rows.filter(r=>!r.dir).length)+' both'))),
+    h('div',{class:'card'}, h('div',{class:'stat'}, h('div',{class:'v'},String(gaps.length)), h('div',{class:'l'},'Uncovered crash hot spots'), h('div',{class:'n'},'0.5-mi bins with 10+ crashes and no sign within 1 mi'))),
+    h('div',{class:'card'}, h('div',{class:'stat'}, h('div',{class:'v'},String(overlaps.length)), h('div',{class:'l'},'Overlapping sign pairs'), h('div',{class:'n'},'same direction, 0.3 mi or closer'))),
+    h('div',{class:'card'}, h('div',{class:'stat'}, h('div',{class:'v'},String(topScore.score)), h('div',{class:'l'},'Highest-scoring sign'), h('div',{class:'n'},topScore.name+' · MP '+topScore.mp.toFixed(1)))));
+  root.append(tiles);
+
+  // Main table
+  const tbl = h('div',{class:'card',style:'margin-bottom:14px'});
+  tbl.append(h('h3',{},'Sign-by-sign exposure in the five-year extract'));
+  tbl.append(h('p',{class:'muted'},'Click a column header to sort. Score column shaded; red = top end.'));
+  const cols = [
+    {k:'name',   t:'Sign',           n:false, f:r=>r.name},
+    {k:'dir',    t:'Dir',            n:false, f:r=>r.dir||'–'},
+    {k:'mp',     t:'MP',             n:true,  f:r=>r.mp.toFixed(1)},
+    {k:'tmcEpisodes', t:'Slowdown episodes (TMC)', n:true, f:r=>fmt(r.tmcEpisodes)},
+    {k:'n',      t:'Crashes',        n:true,  f:r=>fmt(r.n)},
+    {k:'inj',    t:'Injury',         n:true,  f:r=>fmt(r.inj)},
+    {k:'adv',    t:'Adverse weather',n:true,  f:r=>fmt(r.adv)},
+    {k:'truck',  t:'Truck',          n:true,  f:r=>fmt(r.truck)},
+    {k:'wz',     t:'Work zone',      n:true,  f:r=>fmt(r.wz)},
+    {k:'sec',    t:'Possible secondary', n:true, f:r=>fmt(r.sec)},
+    {k:'score',  t:'Score',          n:true,  f:r=>r.score}];
+  let sortKey='score', sortDesc=true;
+  const render=()=>{
+    const sorted = rows.slice().sort((a,b)=>{ const va=a[sortKey], vb=b[sortKey];
+      if (typeof va==='string') return sortDesc?vb.localeCompare(va):va.localeCompare(vb);
+      return sortDesc?(vb-va):(va-vb); });
+    const maxScore = Math.max(1, ...rows.map(r=>r.score));
+    const trows = sorted.map(r=>{
+      const cells = cols.map(c=>{
+        const v = c.f(r);
+        if (c.k==='score'){ const p=r.score/maxScore; const bg=`rgba(208,59,59,${0.08+0.5*p})`; return h('span',{style:`display:inline-block;min-width:38px;text-align:right;padding:2px 8px;border-radius:4px;background:${bg};font-weight:700`}, String(v)); }
+        if (c.k==='dir'){ return h('span',{style:'font-weight:600;color:'+(r.dir==='E'?css('--s1'):r.dir==='W'?css('--s2'):css('--muted'))}, v); }
+        return v;
+      });
+      return cells;
+    });
+    const t = buildTable({columns:cols.map(c=>c.t), rows:trows, numeric:cols.map(c=>c.n?1:0)});
+    // click handlers on header cells to sort
+    t.querySelectorAll('thead th').forEach((th,i)=>{ th.style.cursor='pointer'; th.title='Sort by '+cols[i].t; th.addEventListener('click',()=>{ const k=cols[i].k; if(k===sortKey) sortDesc=!sortDesc; else { sortKey=k; sortDesc=true; } render(); }); if(cols[i].k===sortKey){ th.append(h('span',{style:'margin-left:4px;color:var(--muted)'}, sortDesc?'▼':'▲')); } });
+    body.innerHTML=''; body.append(t);
+  };
+  const body=h('div',{}); tbl.append(body); render();
+  root.append(tbl);
+
+  // Score bar chart by sign
+  const chartHost = h('div',{class:'card',style:'margin-bottom:14px'});
+  chartHost.append(h('h3',{},'Composite score, sorted highest first'), h('p',{class:'muted'},'Longer bars indicate locations where the scored conditions pile up (crashes, injuries, slowdowns, adverse weather, trucks, work zones, possible secondaries).'));
+  const chartEl = h('div',{class:'chart',style:'padding:6px 4px 4px'});
+  chartHost.append(chartEl); root.append(chartHost);
+  {
+    const sorted = rows.slice().sort((a,b)=>b.score-a.score);
+    const H = 24*sorted.length + 24;
+    const W = 1000, LBL = 220;
+    const svg = s('svg',{viewBox:`0 0 ${W} ${H}`, preserveAspectRatio:'none', style:'width:100%;height:auto;max-height:'+H+'px'});
+    const maxScore = Math.max(1, ...sorted.map(r=>r.score));
+    sorted.forEach((r,i)=>{
+      const y=12+i*24;
+      svg.append(s('text',{x:LBL-8, y:y+9, 'text-anchor':'end', 'font-size':'11.5', fill:css('--ink'), 'font-weight':'600'}, r.name));
+      svg.append(s('text',{x:LBL-8-110, y:y+9, 'text-anchor':'end', 'font-size':'11', fill:(r.dir==='E'?css('--s1'):r.dir==='W'?css('--s2'):css('--muted'))}, (r.dir||'–')+'  MP '+r.mp.toFixed(1)));
+      const bw = (W-LBL-60)*r.score/maxScore;
+      svg.append(s('rect',{x:LBL, y:y-6, width:bw, height:14, fill:css('--s2'), rx:3}));
+      svg.append(s('text',{x:LBL+bw+6, y:y+5, 'font-size':'11.5', fill:css('--ink')}, String(r.score)));
+    });
+    chartEl.append(svg);
+  }
+
+  // Coverage gaps
+  const covCard = h('div',{class:'card',style:'margin-bottom:14px'});
+  covCard.append(h('h3',{},'Coverage gaps: crash hot spots > 1 mile from the nearest sign'));
+  if (!gaps.length){ covCard.append(h('p',{class:'muted'},'Every 0.5-mile bin with 10 or more crashes (in the relevant direction) is within 1 mile of a proposed sign — no obvious coverage gaps.')); }
+  else {
+    covCard.append(h('p',{class:'muted'},'Each row is a 0.5-mile bin with at least 10 crashes in that direction whose nearest proposed sign is more than 1 mile away. Consider adding, shifting, or extending coverage.'));
+    covCard.append(buildTable({columns:['Direction','MP bin','Crashes in extract','Nearest sign (mi)'], rows:gaps.sort((a,b)=>b.n-a.n).map(g=>[g.dir==='E'?'Eastbound':'Westbound', g.mp.toFixed(1)+' to '+(g.mp+0.5).toFixed(1), fmt(g.n), g.nearestSignMi==null?'–':g.nearestSignMi.toFixed(2)]), numeric:[0,1,1,1]}));
+  }
+  root.append(covCard);
+
+  // Overlaps
+  const ovCard = h('div',{class:'card',style:'margin-bottom:14px'});
+  ovCard.append(h('h3',{},'Overlapping signs (same direction, 0.3 mi or closer)'));
+  if (!overlaps.length) ovCard.append(h('p',{class:'muted'},'No pairs of VSL signs sit within 0.3 mile of each other on the same direction.'));
+  else {
+    ovCard.append(h('p',{class:'muted'},'These pairs sit very close together on the same direction; make sure both are needed or consolidate.'));
+    ovCard.append(buildTable({columns:['Dir','Sign A','Sign A MP','Sign B','Sign B MP','Gap (mi)'], rows:overlaps.sort((a,b)=>a.gap-b.gap).map(p=>[p.a.dir, p.a.name, p.a.mp.toFixed(2), p.b.name, p.b.mp.toFixed(2), p.gap.toFixed(2)]), numeric:[0,0,1,0,1,1]}));
+  }
+  root.append(ovCard);
+
+  root.append(h('div',{class:'note'}, 'Scoring weights: ',
+    h('code',{},'n'),' crashes ×1.0, ',
+    h('code',{},'inj'),' injury ×2.0, ',
+    h('code',{},'adv'),' adverse-weather ×1.5, ',
+    h('code',{},'truck'),' ×1.0, ',
+    h('code',{},'wz'),' work zone ×0.8, ',
+    h('code',{},'sec'),' possible secondary ×1.5, ',
+    h('code',{},'tmcEpisodes'),' slowdown episodes of the segment ×1.2. ',
+    'Each sub-score is divided by the corridor-wide maximum before weighting, then normalised to 0-100. Crash points with no usable lat/lon are excluded. The ±0.5 mi window and 1.0 mi coverage threshold are editable in the template; the KMZ sign set drives the row list, so dropping a revised KMZ and rebuilding refreshes this tab.'));
 })();
 
 /* restore tab */
