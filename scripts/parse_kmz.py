@@ -114,6 +114,9 @@ def main():
             for c in pm:
                 if strip_ns(c.tag) == "name":
                     n = (c.text or "").strip()
+            # Skip Google Earth's default "Untitled Placemark" entries — they carry no identifying label.
+            if n.lower() == "untitled placemark":
+                continue
             g = placemark_geom(pm)
             if not g: continue
             typ, data = g

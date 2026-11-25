@@ -1015,7 +1015,12 @@ function initMap(){
     const hd = document.createElement('div'); hd.className='layers-hd';
     hd.innerHTML = '<span class="ttl">Layers</span><span class="bulk"><button type="button" data-act="on">All on</button><button type="button" data-act="off">All off</button></span>';
     form.prepend(hd);
-    hd.addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; const on=b.dataset.act==='on'; el.querySelectorAll('input[type=checkbox]').forEach(cb=>{ if(cb.checked!==on){ cb.checked=on; cb.dispatchEvent(new Event('change')); } }); });
+    hd.addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; const on=b.dataset.act==='on';
+      // Click each checkbox whose state needs to change. Leaflet's layer control listens for `click` on its
+      // inputs to actually add / remove the layer on the map; dispatching a programmatic `change` doesn't
+      // trigger it. `.click()` both toggles the checkbox AND fires Leaflet's handler.
+      el.querySelectorAll('input[type=checkbox]').forEach(cb=>{ if(cb.checked!==on) cb.click(); });
+    });
   }, 80);
   L.control.scale({imperial:true, metric:false}).addTo(map);
   window._mapBounds=L.latLngBounds(COR.centerline).pad(0.25); window._mapSized = el.clientWidth>0;
