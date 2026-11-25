@@ -34,17 +34,27 @@ header h1{margin:0;font-size:15px;font-weight:650;white-space:nowrap}
 header .sub{color:var(--ink-2);font-size:11.5px;flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 header a{color:var(--accent);font-size:12px;white-space:nowrap}
 body.embedded header a,body.embedded #btnTheme{display:none}
-.controls{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:7px 14px;border-bottom:1px solid var(--border);background:var(--surface)}
-.controls label{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2);font-size:12px;white-space:nowrap}
-.controls select{font:inherit;font-size:12px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink)}
-.controls input[type=range]{width:220px;accent-color:var(--accent)}
-.controls input[type=range].short{width:90px}
-.controls .time{font-variant-numeric:tabular-nums;font-weight:650;color:var(--ink);min-width:44px}
-.controls button,.btn{font:inherit;font-size:12px;padding:4px 9px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
-.controls button:hover,.btn:hover{border-color:var(--ink-2)}
-.controls label.off{opacity:.45}
-#wrap{position:relative;flex:1 1 auto;min-height:0}
+#drawerBtn{font:inherit;font-size:12px;padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+#drawerBtn[aria-pressed="true"]{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* Legacy inline controls bar: hidden now that the same controls live inside the left drawer.
+   The element is kept so the IIFE below can still resolve `fMetric` etc. by id. */
+.controls{display:none}
+/* Full-height split: drawer on the left, map on the right. */
+#wrap{position:relative;flex:1 1 auto;min-height:0;display:flex}
+#drawer{flex:0 0 0;width:0;overflow:hidden;transition:flex-basis .2s ease,width .2s ease;background:var(--surface);border-right:1px solid var(--border)}
+body.drawer-open #drawer{flex:0 0 280px;width:280px}
+.drawer-inner{width:280px;height:100%;overflow-y:auto;padding:12px 14px 20px;display:flex;flex-direction:column;gap:12px}
+.drawer-inner h3{margin:10px 0 2px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.drawer-inner h3:first-child{margin-top:0}
+.drawer-inner label.field{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--ink-2)}
+.drawer-inner select,.drawer-inner input[type=range]{font:inherit;font-size:12.5px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink);width:100%}
+.drawer-inner input[type=range]{padding:0;accent-color:var(--accent)}
+.drawer-inner .time{font-variant-numeric:tabular-nums;font-weight:650;color:var(--ink);font-size:12.5px}
+.drawer-inner button{font:inherit;font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink);cursor:pointer}
+.drawer-inner label.field.off{opacity:.45}
+#mainwrap{position:relative;flex:1 1 auto;min-width:0}
 #map{position:absolute;inset:0;background:var(--surface-2)}
+#mainwrap > #map,#mainwrap > #legend,#mainwrap > #hint,#mainwrap > #panel,#mainwrap > #assets{position:absolute}
 .leaflet-container{font:inherit}
 #hint{position:absolute;left:10px;bottom:34px;background:var(--surface);color:var(--ink-2);font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);pointer-events:none;z-index:600;max-width:60%}
 /* legend */
@@ -91,7 +101,11 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .vsl-asset-icon{background:transparent;border:0;overflow:visible}
 .vsl-asset-icon svg{display:block}
 #assets{position:absolute;right:10px;top:10px;z-index:700;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:7px 9px;font-size:11.5px;max-width:230px}
-#assets h3{margin:0 0 4px;font-size:12px;font-weight:650}
+#assets h3{margin:0;font-size:12px;font-weight:650}
+#assets .hd{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+#assets .bulk{margin-left:auto;display:inline-flex;gap:3px}
+#assets .bulk button{font:inherit;font-size:10.5px;padding:1px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--ink-2);cursor:pointer}
+#assets .bulk button:hover{color:var(--ink);border-color:var(--ink-2)}
 #assets label{display:flex;align-items:center;gap:6px;padding:2px 2px;border-radius:4px;cursor:pointer;user-select:none}
 #assets label:hover{background:var(--surface-2)}
 #assets .sw{width:18px;height:18px;flex:none;display:inline-block}
@@ -100,8 +114,9 @@ body.panel-open #assets{display:none}
 @media (max-width:760px){ #panel{width:calc(100% - 20px)} .controls input[type=range]{width:140px} #legend{min-width:0} }
 </style>
 </head>
-<body>
+<body class="drawer-open">
 <header>
+  <button id="drawerBtn" type="button" aria-pressed="true" title="show / hide filters">☰ Filters</button>
   <h1>I-78 INRIX travel times</h1>
   <a href="I78_VSL_Dashboard.html">← back to the VSL workbook</a>
   <span class="sub" id="subtitle">Loading…</span>
@@ -126,6 +141,8 @@ body.panel-open #assets{display:none}
   <button id="btnFull" type="button" style="display:none" title="fill the browser window">Full screen</button>
 </div>
 <div id="wrap">
+  <aside id="drawer" aria-label="Map filters"><div class="drawer-inner" id="drawerInner"></div></aside>
+  <div id="mainwrap">
   <div id="map"></div>
   <div id="legend"></div>
   <div id="assets"></div>
@@ -141,6 +158,7 @@ body.panel-open #assets{display:none}
     <div class="chartkey"><span><i style="border-top:8px solid var(--seq1)"></i>up to median</span><span><i style="border-top:8px solid var(--seq2)"></i>median to 85th</span><span><i style="border-top:8px solid var(--seq3)"></i>85th to 95th</span><span><i style="border-top:8px solid var(--seq5)"></i>above 95th</span></div>
     <div id="pEvents"></div>
   </div>
+  </div><!-- /#mainwrap -->
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
@@ -163,6 +181,35 @@ function niceTicks(min,max,n=5){ if(max===min) max=min+1; const span=max-min, st
 // ------------------------------------------------------------ theme
 const EMBEDDED=(()=>{ try{ return window.self!==window.top; }catch(e){ return true; } })();
 if(EMBEDDED){ document.body.classList.add('embedded'); const bf=$('btnFull'); bf.style.display=''; bf.addEventListener('click',()=>{ try{ window.parent.toggleFullscreen(); }catch(e){} }); }
+/* Move the original .controls bar into the left drawer so its filters sit on the same side as the
+   dashboard's filter drawer; the drawer toggle in the header opens / closes it and remembers state. */
+(function(){ const dInner=$('drawerInner'), controls=document.querySelector('.controls');
+  const group=(title, ids)=>{ const h3=document.createElement('h3'); h3.textContent=title; dInner.append(h3);
+    ids.forEach(id=>{ const el=document.getElementById(id); if(!el) return;
+      let lab=el.previousElementSibling; let host=document.createElement('label'); host.className='field';
+      // The original markup wraps selects / inputs in a <label>; find its text and re-use it.
+      const parentLabel=el.closest('.controls > label'); let text=''; if(parentLabel){ for(const n of parentLabel.childNodes){ if(n.nodeType===3){ text+=n.textContent; } } }
+      text = text.replace(/\s+/g,' ').trim();
+      if(text){ const span=document.createElement('span'); span.textContent=text; host.append(span); }
+      host.append(el);
+      // keep the id for the slider's time label and play button near the slider
+      if(id==='fBin'){ const t=document.getElementById('binLabel'); if(t){ const row=document.createElement('div'); row.style.cssText='display:flex;align-items:center;gap:8px;margin-top:3px'; row.append(t); const play=document.getElementById('btnPlay'); if(play) row.append(play); host.append(row); } }
+      dInner.append(host);
+    });
+  };
+  group('Color by metric', ['fMetric']);
+  group('When', ['fDay','fDir','fBin']);
+  group('Basemap', ['fBase','fOpacity']);
+  // theme + full screen at the bottom of the drawer
+  const foot=document.createElement('div'); foot.style.cssText='display:flex;gap:6px;margin-top:auto'; const tb=document.getElementById('btnTheme'); const fb=document.getElementById('btnFull'); if(tb) foot.append(tb); if(fb) foot.append(fb); dInner.append(foot);
+  // Drawer toggle: persisted independently, but when embedded the parent drives it via setDrawer().
+  const btn=document.getElementById('drawerBtn'); let open=true;
+  try{ if(!EMBEDDED && localStorage.getItem('i78-inrix-drawer')==='0') open=false; }catch(e){}
+  function apply(){ document.body.classList.toggle('drawer-open', open); btn.setAttribute('aria-pressed', open?'true':'false'); setTimeout(()=>{ if(window.__inrix && window.__inrix.map) window.__inrix.map.invalidateSize(); }, 220); }
+  btn.addEventListener('click',()=>{ open=!open; apply(); try{ if(!EMBEDDED) localStorage.setItem('i78-inrix-drawer', open?'1':'0'); }catch(e){} });
+  window.__setDrawer=v=>{ open=!!v; apply(); };
+  apply();
+})();
 (function(){ const btn=$('btnTheme'); const order=['auto','light','dark']; let cur='auto'; try{ cur=localStorage.getItem('i78-inrix-theme')||'auto'; }catch(e){}
   if(EMBEDDED){ try{ cur=window.parent.document.documentElement.getAttribute('data-theme')||'auto'; }catch(e){} }
   window.__applyTheme=function(t){ cur=t||'auto'; apply(); recolor(); if(pinId) showPanel(pinId); }; const apply=()=>{ if(cur==='auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme',cur); btn.textContent='Theme: '+cur; }; apply(); btn.addEventListener('click',()=>{ cur=order[(order.indexOf(cur)+1)%3]; try{ localStorage.setItem('i78-inrix-theme',cur);}catch(e){} apply(); recolor(); if(pinId) showPanel(pinId); }); })();
@@ -227,6 +274,15 @@ function assetShapeSvg(shape,color){
   const S={diamond:'<path d="M10 2 L18 10 L10 18 L2 10 Z"/>', triangle:'<path d="M10 2 L18 17 L2 17 Z"/>', square:'<rect x="3" y="3" width="14" height="14"/>', pentagon:'<path d="M10 2 L18 8 L15 18 L5 18 L2 8 Z"/>', bolt:'<path d="M11 2 L4 11 L9 11 L8 18 L16 9 L10 9 L11 2 Z"/>', circle:'<circle cx="10" cy="10" r="7"/>', hex:'<path d="M10 2 L17 6 L17 14 L10 18 L3 14 L3 6 Z"/>'};
   return `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 0 1.5px rgba(0,0,0,.35))"><g fill="${color}" stroke="#111" stroke-width="1" stroke-linejoin="round">${S[shape]||S.circle}</g></svg>`;
 }
+/* Use the resized PNG when the kind has one (ramp exits, static speed limits, transformers, DMS, CSS, VSL)
+   so the map shows the real sign at a glance instead of a colored geometric shape. VSL signs and DMS boards
+   render larger because their text is harder to read than a silhouette. */
+const ASSET_PX={vsl_sign:36, dms:36};
+function assetMarkerHtml(kind, spec, px){
+  const url = DATA.asset_icons && DATA.asset_icons[kind];
+  if (url) return `<img src="${url}" width="${px}" height="${px}" alt="${spec.label}" style="display:block;filter:drop-shadow(0 0 2px rgba(255,255,255,.95)) drop-shadow(0 0 1.5px rgba(0,0,0,.35))">`;
+  return assetShapeSvg(spec.shape, spec.color);
+}
 const ASSET_LAYERS={};
 (DATA.assets||[]).forEach(folder=>{
   const spec=ASSET_KINDS[folder.kind]||{label:folder.name, shape:'circle', color:'#888'};
@@ -235,7 +291,8 @@ const ASSET_LAYERS={};
     if(feat.coords && feat.coords.length){
       L.polyline(feat.coords,{color:spec.color,weight:4,opacity:.85,dashArray:spec.shape==='line'?'2 5':null}).bindTooltip(`<b>${spec.label}</b><br>${feat.name||''}`,{sticky:true}).addTo(lg);
     } else if (feat.lat!=null){
-      const icon=L.divIcon({className:'vsl-asset-icon',html:assetShapeSvg(spec.shape,spec.color),iconSize:[20,20],iconAnchor:[10,10]});
+      const hasPhoto = !!(DATA.asset_icons && DATA.asset_icons[folder.kind]); const sz = hasPhoto ? (ASSET_PX[folder.kind]||28) : 20;
+      const icon=L.divIcon({className:'vsl-asset-icon',html:assetMarkerHtml(folder.kind,spec,sz),iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
       L.marker([feat.lat,feat.lon],{icon,title:feat.name||spec.label}).bindTooltip(`<b>${spec.label}</b><br>${feat.name||''}`,{sticky:true}).addTo(lg);
     }
   });
@@ -244,14 +301,18 @@ const ASSET_LAYERS={};
 });
 // Build the asset toggle panel
 (function(){ const box=$('assets'); if(!DATA.assets||!DATA.assets.length){ box.style.display='none'; return; }
-  box.innerHTML='<h3>VSL / ITS assets</h3>';
+  box.innerHTML='<div class="hd"><h3>Layers</h3><span class="bulk"><button type="button" id="layersAllOn">All on</button><button type="button" id="layersAllOff">All off</button></span></div>';
   DATA.assets.forEach(folder=>{ const spec=ASSET_KINDS[folder.kind]||{label:folder.name,shape:'circle',color:'#888'}; const lg=ASSET_LAYERS[folder.kind]; const on=map.hasLayer(lg);
     const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=on;
-    const sw=document.createElement('span'); sw.className='sw'; sw.innerHTML=spec.shape==='line'?`<span class="ln" style="color:${spec.color}"></span>`:assetShapeSvg(spec.shape,spec.color);
+    const sw=document.createElement('span'); sw.className='sw'; sw.innerHTML=spec.shape==='line'?`<span class="ln" style="color:${spec.color}"></span>`:assetMarkerHtml(folder.kind,spec,18);
     const txt=document.createElement('span'); txt.textContent=`${spec.label} (${folder.features.length})`;
     const row=document.createElement('label'); row.append(cb,sw,txt);
     cb.addEventListener('change',()=>{ if(cb.checked) lg.addTo(map); else map.removeLayer(lg); });
     box.append(row); });
+  // All on / All off bulk toggles: operate on every Layers checkbox in the panel.
+  const boxes=()=>box.querySelectorAll('label input[type=checkbox]');
+  document.getElementById('layersAllOn').addEventListener('click',()=>{ boxes().forEach(cb=>{ if(!cb.checked){ cb.checked=true; cb.dispatchEvent(new Event('change')); } }); });
+  document.getElementById('layersAllOff').addEventListener('click',()=>{ boxes().forEach(cb=>{ if(cb.checked){ cb.checked=false; cb.dispatchEvent(new Event('change')); } }); });
 })();
 map.fitBounds(L.latLngBounds(T.flatMap(t=>t.geom)).pad(0.08));
 L.control.scale({imperial:true,metric:false}).addTo(map);
@@ -351,6 +412,8 @@ function readHash(){ const p=new URLSearchParams(location.hash.replace(/^#/,''))
 window.addEventListener('resize',()=>{ if(pinId) showPanel(pinId); });
 window.__inrix={map, SEG, state, recolor, pin, LIMITS, HIDDEN};
 readHash();
+// Embedded case: the parent frame fires `load` and calls __applyTheme, which repaints segments. Belt + braces: re-run recolor once more after a tick so any late layout settle (drawer open/close, map invalidate) doesn't leave segments stuck grey.
+setTimeout(()=>{ try{ recolor(); }catch(e){} }, 400);
 })();
 </script>
 </body>

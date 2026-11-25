@@ -187,6 +187,12 @@ ul.tight{margin:.2em 0 .6em 1.2em;padding:0} ul.tight li{margin:.15em 0}
 .rwis-label{background:var(--warn);color:#1a1a1a;border-radius:4px;padding:1px 5px;font-size:.7rem;font-weight:700;white-space:nowrap}
 .vsl-asset-icon{background:transparent;border:0;overflow:visible}
 .vsl-asset-icon svg{display:block}
+/* Small header prepended to Leaflet's layer control, labelling it "Layers" and offering all-on/all-off. */
+.leaflet-control-layers .layers-hd{display:flex;align-items:center;gap:8px;padding:6px 8px 4px;margin:0 -8px 4px;border-bottom:1px solid var(--border)}
+.leaflet-control-layers .layers-hd .ttl{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.leaflet-control-layers .layers-hd .bulk{margin-left:auto;display:inline-flex;gap:3px}
+.leaflet-control-layers .layers-hd .bulk button{font:inherit;font-size:10.5px;padding:1px 6px;border:1px solid var(--border);border-radius:4px;background:var(--surface-2);color:var(--ink-2);cursor:pointer}
+.leaflet-control-layers .layers-hd .bulk button:hover{color:var(--ink);border-color:var(--ink-2)}
 .stat-sig{color:var(--good);font-weight:600} .stat-ns{color:var(--muted)}
 .leaflet-container{background:var(--surface-2)}
 .leaflet-container{font:inherit}
@@ -999,7 +1005,16 @@ function initMap(){
   overlays['Candidate RWIS sites']=rwis;
   // VSL / ITS assets from the KMZs, one layer per folder, a distinct SVG shape per kind
   addAssetLayers(map, overlays);
-  L.control.layers(null, overlays, {collapsed:false}).addTo(map);
+  const layerCtrl = L.control.layers(null, overlays, {collapsed:false}).addTo(map);
+  // Add a tiny header to the layer control that labels it "Layers" and offers all-on / all-off.
+  setTimeout(()=>{
+    const el = layerCtrl.getContainer(); if(!el) return;
+    const form = el.querySelector('.leaflet-control-layers-list, form'); if(!form || form.querySelector('.layers-hd')) return;
+    const hd = document.createElement('div'); hd.className='layers-hd';
+    hd.innerHTML = '<span class="ttl">Layers</span><span class="bulk"><button type="button" data-act="on">All on</button><button type="button" data-act="off">All off</button></span>';
+    form.prepend(hd);
+    hd.addEventListener('click', e=>{ const b=e.target.closest('button'); if(!b) return; const on=b.dataset.act==='on'; el.querySelectorAll('input[type=checkbox]').forEach(cb=>{ if(cb.checked!==on){ cb.checked=on; cb.dispatchEvent(new Event('change')); } }); });
+  }, 80);
   L.control.scale({imperial:true, metric:false}).addTo(map);
   window._mapBounds=L.latLngBounds(COR.centerline).pad(0.25); window._mapSized = el.clientWidth>0;
   map.fitBounds(window._mapBounds);
@@ -1036,11 +1051,14 @@ function setMapView(v){
   const md=$('#mapdiv'); if(md) md.style.display = ix ? 'none' : '';
   const w=$('#inrixwrap'); if(w) w.style.display = ix ? 'block' : 'none';
   const lg=$('#map-legend'); if(lg) lg.style.display = ix ? 'none' : '';
-  // Drawer carries dashboard-map filters (crash filters etc.) that don't apply to the embedded INRIX page,
-  // which has its own filter bar. Hide the drawer button and collapse the drawer when the INRIX view is shown.
-  const db=$('#mapDrawerBtn'); if(db) db.style.display = ix ? 'none' : '';
-  const sh=$('#mapshell'); if(sh){ let pref=true; try{ pref = localStorage.getItem('i78-mapdrawer')!=='0'; }catch(e){} sh.classList.toggle('open', ix?false:pref); }
-  if(ix){ if($('#panel-map').classList.contains('active')) ensureInrixFrame(); }
+  // Drawer carries dashboard-map filters (crashes, weather, etc.) that only apply to the all-datasets view,
+  // so when switching to INRIX we collapse the dashboard drawer (the embedded INRIX page has its own left
+  // drawer with the INRIX-specific filters). The chrome's "Filters" button then toggles whichever drawer
+  // is visible, keeping the filters always on the same side.
+  let pref=true; try{ pref = localStorage.getItem('i78-mapdrawer')!=='0'; }catch(e){}
+  const sh=$('#mapshell'); if(sh) sh.classList.toggle('open', ix?false:pref);
+  const db=$('#mapDrawerBtn'); if(db){ db.setAttribute('aria-pressed', ix?'true':(pref?'true':'false')); db.classList.toggle('on', ix?true:pref); }
+  if(ix){ if($('#panel-map').classList.contains('active')) ensureInrixFrame(); inrixCall(x=>{ if(x.__setDrawer) x.__setDrawer(pref); }); }
   else setTimeout(showMainMap, 50);
   setTimeout(()=>{ if(window._map) window._map.invalidateSize(); inrixCall(x=>x.__inrix.map.invalidateSize()); }, 220);
 }
@@ -1139,6 +1157,17 @@ function assetShapeSvg(shape,color){
   // outer white casing so markers read on any basemap, then the colored fill with a thin dark stroke
   return `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 0 1.5px rgba(0,0,0,.35))"><g fill="${color}" stroke="#111" stroke-width="1" stroke-linejoin="round">${g}</g></svg>`;
 }
+/* When the kind has a resized PNG in icons/sized/, show the real sign/transformer picture with a soft
+   white halo so it reads on any basemap. Falls back to the colored SVG shape otherwise.
+   VSL signs and DMS boards are rendered larger because their text is harder to read than a silhouette. */
+const ASSET_PX = {vsl_sign:36, dms:36};
+function assetIconPx(kind){ return ASSET_PX[kind] || 28; }
+function assetIconHtml(kind, spec, color, pxOverride){
+  const url = (DATA.assets && DATA.assets.icons && DATA.assets.icons[kind]) || null;
+  const px = pxOverride || assetIconPx(kind);
+  if (url) return `<img src="${url}" width="${px}" height="${px}" alt="${spec.label}" style="display:block;filter:drop-shadow(0 0 2px rgba(255,255,255,.95)) drop-shadow(0 0 1.5px rgba(0,0,0,.35))">`;
+  return assetShapeSvg(spec.shape, color);
+}
 function addAssetLayers(map, overlays){
   const assets = (DATA.assets && DATA.assets.folders) || DATA.assets || [];
   if (!assets || !assets.length) return;
@@ -1146,13 +1175,15 @@ function addAssetLayers(map, overlays){
     const spec = ASSET_KINDS[folder.kind] || {label:folder.name, shape:'circle', var:'--muted'};
     const lg = L.layerGroup();
     const color = css(spec.var);
+    const hasPhoto = !!(DATA.assets && DATA.assets.icons && DATA.assets.icons[folder.kind]);
+    const sz = hasPhoto ? assetIconPx(folder.kind) : 20;
     folder.features.forEach(feat=>{
       if (feat.coords && feat.coords.length){
         // line feature (fiber optic cable segments)
         L.polyline(feat.coords, {color, weight:4, opacity:.85, dashArray: spec.shape==='line'?'2 5':null})
           .bindTooltip(`<b>${spec.label}</b><br>${feat.name||''}`,{sticky:true}).addTo(lg);
       } else if (feat.lat!=null){
-        const icon = L.divIcon({className:'vsl-asset-icon', html: assetShapeSvg(spec.shape, color), iconSize:[20,20], iconAnchor:[10,10]});
+        const icon = L.divIcon({className:'vsl-asset-icon', html: assetIconHtml(folder.kind, spec, color), iconSize:[sz,sz], iconAnchor:[sz/2,sz/2]});
         L.marker([feat.lat, feat.lon], {icon, title: feat.name||spec.label})
           .bindTooltip(`<b>${spec.label}</b><br>${feat.name||''}`,{sticky:true}).addTo(lg);
       }
@@ -1183,7 +1214,7 @@ const RWIS_SITES=[
   const chrome=h('div',{class:'mapchrome'});
   const drawerBtn=h('button',{type:'button',class:'iconbtn on',id:'mapDrawerBtn','aria-pressed':'true'},'☰ Filters');
   let drawerOpen=true; try{ const v=localStorage.getItem('i78-mapdrawer'); if(v==='0') drawerOpen=false; }catch(e){}
-  drawerBtn.addEventListener('click',()=>{ drawerOpen=!drawerOpen; applyDrawer(); try{ localStorage.setItem('i78-mapdrawer',drawerOpen?'1':'0');}catch(e){} });
+  drawerBtn.addEventListener('click',()=>{ drawerOpen=!drawerOpen; applyDrawer(); try{ localStorage.setItem('i78-mapdrawer',drawerOpen?'1':'0');}catch(e){} inrixCall(x=>{ if(x.__setDrawer) x.__setDrawer(drawerOpen); }); });
   chrome.append(drawerBtn);
   if (hasIXmap){
     const pill=h('div',{class:'pill',id:'map-view'});
@@ -1240,7 +1271,7 @@ const RWIS_SITES=[
   lg.append(h('span',{}, h('i',{class:'sq',style:'background:'+css('--s1')}), 'EB density'), h('span',{}, h('i',{class:'sq',style:'background:'+css('--s2')}), 'WB density'), h('span',{}, h('i',{style:'background:'+css('--s4')+';opacity:.5'}), 'Slowdown hot spot'), h('span',{}, h('i',{style:'background:'+css('--s2')+';opacity:.6'}), 'COOP'), h('span',{}, h('i',{style:'background:'+css('--s3')+';opacity:.6'}), 'CoCoRaHS'), h('span',{}, h('i',{class:'sq',style:'background:'+css('--s1')+';opacity:.3'}), 'Zone band'));
   if (DATA.assets && (DATA.assets.folders||[]).length){
     DATA.assets.folders.forEach(f=>{ const s=ASSET_KINDS[f.kind]; if(!s) return; const el=h('span',{title:f.name});
-      const holder=h('i',{style:'background:transparent;border:0;width:16px;height:16px;border-radius:0'}); holder.innerHTML=assetShapeSvg(s.shape, css(s.var));
+      const holder=h('i',{style:'background:transparent;border:0;width:16px;height:16px;border-radius:0'}); holder.innerHTML=assetIconHtml(f.kind, s, css(s.var), 16);
       el.append(holder, document.createTextNode(s.label)); lg.append(el); }); }
 
   // Below-map footer (kept inside the 1380 wrap)

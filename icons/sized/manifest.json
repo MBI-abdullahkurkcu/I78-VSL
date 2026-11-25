@@ -1,0 +1,32 @@
+{
+  "ramp_exit": {
+    "file": "icons/sized/ramp_exit.png",
+    "bytes": 1329,
+    "px": 32
+  },
+  "speed_limit": {
+    "file": "icons/sized/speed_limit.png",
+    "bytes": 2059,
+    "px": 32
+  },
+  "transformer": {
+    "file": "icons/sized/transformer.png",
+    "bytes": 1718,
+    "px": 32
+  },
+  "dms": {
+    "file": "icons/sized/dms.png",
+    "bytes": 2097,
+    "px": 48
+  },
+  "css": {
+    "file": "icons/sized/css.png",
+    "bytes": 1354,
+    "px": 32
+  },
+  "vsl_sign": {
+    "file": "icons/sized/vsl_sign.png",
+    "bytes": 3231,
+    "px": 48
+  }
+}

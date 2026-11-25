@@ -536,12 +536,24 @@ def cross_analysis(climate, inrix, crashes):
 
 
 def load_vsl_assets():
-    """Load dashboard/data/vsl_assets.json (written by scripts/parse_kmz.py from the KMZs in dashboard/data/KMZs/)."""
+    """Load dashboard/data/vsl_assets.json (written by scripts/parse_kmz.py from the KMZs in dashboard/data/KMZs/).
+    Also attach a `icons` map {kind: base64 data URI} for any PNG in icons/sized/, so the dashboard can show the
+    real sign / transformer / DMS pictures in place of the default SVG shape without any runtime file fetches."""
+    import base64
     p = os.path.join(ROOT, "dashboard", "data", "vsl_assets.json")
     if not os.path.exists(p):
-        return {"status": "missing", "folders": [], "meta": {}}
+        return {"status": "missing", "folders": [], "meta": {}, "icons": {}}
     with open(p, encoding="utf-8") as f:
         data = json.load(f)
+    icons = {}
+    sized = os.path.join(ROOT, "icons", "sized")
+    if os.path.isdir(sized):
+        for fn in sorted(os.listdir(sized)):
+            if not fn.lower().endswith(".png"): continue
+            kind = fn[:-4]
+            with open(os.path.join(sized, fn), "rb") as fh:
+                icons[kind] = "data:image/png;base64," + base64.b64encode(fh.read()).decode("ascii")
+    data["icons"] = icons
     data["status"] = "loaded"
     return data
 
@@ -636,6 +648,7 @@ def build_inrix_map(data, corridor):
         "events": [e for e in inrix.get("events", [])],
         "interchanges": [{"mp": x["mp"], "lat": x["lat"], "lon": x["lon"], "short": short(x["label"]), "label": x["label"]} for x in corridor["interchanges"]],
         "assets": data.get("assets", {}).get("folders", []),
+        "asset_icons": data.get("assets", {}).get("icons", {}),
     }
     with open(tpl, encoding="utf-8") as f:
         html = f.read()
