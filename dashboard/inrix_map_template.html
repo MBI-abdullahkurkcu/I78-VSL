@@ -277,7 +277,7 @@ function assetShapeSvg(shape,color){
 /* Use the resized PNG when the kind has one (ramp exits, static speed limits, transformers, DMS, CSS, VSL)
    so the map shows the real sign at a glance instead of a colored geometric shape. VSL signs and DMS boards
    render larger because their text is harder to read than a silhouette. */
-const ASSET_PX={vsl_sign:36, dms:36};
+const ASSET_PX={vsl_sign:36, dms:48};
 function assetMarkerHtml(kind, spec, px){
   const url = DATA.asset_icons && DATA.asset_icons[kind];
   if (url) return `<img src="${url}" width="${px}" height="${px}" alt="${spec.label}" style="display:block;filter:drop-shadow(0 0 2px rgba(255,255,255,.95)) drop-shadow(0 0 1.5px rgba(0,0,0,.35))">`;

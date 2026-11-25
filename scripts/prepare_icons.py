@@ -21,7 +21,7 @@ KINDS = [
     ("ramp-exit.png",                "ramp_exit",   32),
     ("static-speed-limit-sign.jpg",  "speed_limit", 32),
     ("transformer.png",              "transformer", 32),
-    ("dynamic-message-sign-dms.png", "dms",         48),  # larger: the DMS board was unreadable at 32
+    ("dynamic-message-sign-dms.png", "dms",         64),  # larger source so the on-map DMS stays crisp at 48 px
     ("CSS.png",                      "css",         32),
     ("VSL-sign.png",                 "vsl_sign",    48),  # larger: VSL sign text is hard to read at 32
 ]

@@ -1160,7 +1160,7 @@ function assetShapeSvg(shape,color){
 /* When the kind has a resized PNG in icons/sized/, show the real sign/transformer picture with a soft
    white halo so it reads on any basemap. Falls back to the colored SVG shape otherwise.
    VSL signs and DMS boards are rendered larger because their text is harder to read than a silhouette. */
-const ASSET_PX = {vsl_sign:36, dms:36};
+const ASSET_PX = {vsl_sign:36, dms:48};
 function assetIconPx(kind){ return ASSET_PX[kind] || 28; }
 function assetIconHtml(kind, spec, color, pxOverride){
   const url = (DATA.assets && DATA.assets.icons && DATA.assets.icons[kind]) || null;
