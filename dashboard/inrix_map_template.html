@@ -190,7 +190,7 @@ function classOf(k,v){ if(v==null||Number.isNaN(v)) return -1; const L=LIMITS[k]
 function classColor(k,c){ if(c<0) return css('--nodata'); const ramp=METRICS[k].worseHigh?RAMP:[...RAMP].reverse(); return ramp[c]; }
 
 // ------------------------------------------------------------ map
-const map=L.map('map',{zoomControl:true, preferCanvas:false});
+const map=L.map('map',{zoomControl:true, preferCanvas:false, scrollWheelZoom:true, zoomSnap:0.25});
 const ESRI='https://server.arcgisonline.com/ArcGIS/rest/services/';
 const BASES={ esri:[ESRI+'World_Street_Map/MapServer/tile/{z}/{y}/{x}'], esrigray:[ESRI+'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', ESRI+'Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}'], esritopo:[ESRI+'World_Topo_Map/MapServer/tile/{z}/{y}/{x}'], esriimg:[ESRI+'World_Imagery/MapServer/tile/{z}/{y}/{x}'] };
 let baseLayers=[];

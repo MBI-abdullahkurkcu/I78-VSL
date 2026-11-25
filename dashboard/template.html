@@ -128,7 +128,39 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .badge.crit{background:rgba(208,59,59,.14);color:var(--ink)}
 ul.tight{margin:.2em 0 .6em 1.2em;padding:0} ul.tight li{margin:.15em 0}
 .map{height:calc(100vh - 150px);min-height:520px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
+/* Full-bleed map section: the map and its filter drawer fill the viewport width while the rest of the page keeps the 1380 px wrap. */
+.mapwrap{position:relative;width:100vw;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;background:var(--surface-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.mapshell{display:flex;height:calc(100vh - var(--mapchrome,170px));min-height:520px}
+.mapshell .drawer{flex:0 0 0;width:0;overflow:hidden;transition:flex-basis .2s ease, width .2s ease;background:var(--surface);border-right:1px solid var(--border)}
+.mapshell.open .drawer{flex:0 0 280px;width:280px}
+.drawer-inner{width:280px;height:100%;overflow-y:auto;padding:12px 14px 20px;display:flex;flex-direction:column;gap:10px}
+.drawer-inner h3{margin:10px 0 2px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.drawer-inner h3:first-child{margin-top:0}
+.drawer-inner label{display:flex;flex-direction:column;gap:3px;font-size:11.5px;color:var(--ink-2)}
+.drawer-inner label.chk{flex-direction:row;align-items:center;gap:7px;font-size:12.5px;color:var(--ink)}
+.drawer-inner label.chk input{margin:0;width:15px;height:15px;accent-color:var(--accent);flex:none}
+.drawer-inner select,.drawer-inner input[type=range]{font:inherit;font-size:12.5px;padding:5px 7px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink);width:100%}
+.drawer-inner input[type=range]{padding:0}
+.mapshell .mapmain{flex:1 1 auto;position:relative;min-width:0;height:100%}
+.mapshell .map{position:absolute;inset:0;height:auto;min-height:0;border-radius:0;border:0}
+.mapshell .map.fullscreen{position:fixed !important;inset:0;height:100vh;z-index:2500}
+.mapchrome{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border)}
+.mapchrome .sep{flex:1}
+.mapchrome .pill{display:inline-flex;gap:0;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:2px}
+.mapchrome .pill button{appearance:none;border:0;background:none;color:var(--ink-2);font:inherit;font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap}
+.mapchrome .pill button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.mapchrome .iconbtn{appearance:none;font:inherit;font-size:12.5px;font-weight:600;padding:5px 11px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.mapchrome .iconbtn:hover{background:var(--surface-2);color:var(--ink)}
+.mapchrome .iconbtn.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.mapoverlay{position:absolute;left:12px;bottom:12px;z-index:800;background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);padding:7px 10px;font-size:11.5px;color:var(--ink-2);max-width:min(72%,720px);display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.mapoverlay:empty{display:none}
+.mapoverlay span{display:inline-flex;align-items:center;gap:5px}
+.mapoverlay i{display:inline-block;width:12px;height:12px;border-radius:50%}
+.mapoverlay i.sq{border-radius:2px;width:14px;height:8px}
+.mapsection-footer{max-width:1380px;margin:14px auto 0;padding:0 16px}
+#panel-map.full .wrap-inner{display:none}
 .map.fullscreen{position:fixed !important;inset:0;height:100vh;min-height:0;z-index:2500;border-radius:0;border:0} /* !important: Leaflet writes position:relative inline on its container */
+.mapshell.fullscreen{position:fixed !important;inset:0;height:100vh;width:100vw;z-index:2500;background:var(--surface)}
 #inrixwrap{display:none}
 #inrixwrap.fullscreen{position:fixed;inset:0;height:100vh;min-height:0;z-index:2500;border-radius:0;border:0}
 #inrixwrap iframe{width:100%;height:100%;border:0;display:block;background:var(--surface-2)}
@@ -937,7 +969,7 @@ function refreshSegments(){
 function initMap(){
   const el=$('#mapdiv'); if(!el || window._map) return;
   if (typeof L==='undefined'){ el.innerHTML='<div class="note">Leaflet failed to load, so the map cannot draw. Coordinates are in the tables.</div>'; return; }
-  const map=L.map(el,{scrollWheelZoom:false, preferCanvas:true}); window._map=map;
+  const map=L.map(el,{scrollWheelZoom:true, preferCanvas:true, zoomSnap:0.25}); window._map=map;
   setBasemap(MAPF.basemap,false);
   const overlays={};
   // VSL zones
@@ -975,7 +1007,7 @@ function initMap(){
 }
 function toggleFullscreen(force){
   const ix = MAPVIEW.v==='inrix';
-  const el = ix ? $('#inrixwrap') : $('#mapdiv'); if(!el) return; const on = force===undefined ? !el.classList.contains('fullscreen') : force;
+  const el = $('#mapshell') || (ix ? $('#inrixwrap') : $('#mapdiv')); if(!el) return; const on = force===undefined ? !el.classList.contains('fullscreen') : force;
   el.classList.toggle('fullscreen', on); $$('.map-fullbtn').forEach(b=>{ b.textContent = on ? 'Exit full screen (Esc)' : 'Full screen'; });
   if (on && !ix && !el.querySelector('.map-exit')){ const x=h('button',{type:'button',class:'mapbtn map-exit',style:'position:absolute;top:10px;left:56px;z-index:1000'},'Exit full screen'); x.addEventListener('click',()=>toggleFullscreen(false)); el.append(x); }
   if (!on){ const x=el.querySelector('.map-exit'); if(x) x.remove(); }
@@ -999,13 +1031,18 @@ function ensureInrixFrame(){
 }
 function setMapView(v){
   MAPVIEW.v=v; try{ localStorage.setItem('i78-mapview',v);}catch(e){}
-  $$('.mapview .mapbtn[data-view]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.view===v?'true':'false'));
+  $$('#map-view button[data-view]').forEach(b=>b.setAttribute('aria-pressed', b.dataset.view===v?'true':'false'));
   const ix = v==='inrix';
-  ['#map-filters','#mapdiv','#segpanel','#map-legend','#map-status','#map-basenote'].forEach(s=>{ const e=$(s); if(e) e.style.display = ix ? 'none' : ''; });
+  const md=$('#mapdiv'); if(md) md.style.display = ix ? 'none' : '';
   const w=$('#inrixwrap'); if(w) w.style.display = ix ? 'block' : 'none';
-  const n=$('#map-ixnote'); if(n) n.style.display = ix ? '' : 'none';
+  const lg=$('#map-legend'); if(lg) lg.style.display = ix ? 'none' : '';
+  // Drawer carries dashboard-map filters (crash filters etc.) that don't apply to the embedded INRIX page,
+  // which has its own filter bar. Hide the drawer button and collapse the drawer when the INRIX view is shown.
+  const db=$('#mapDrawerBtn'); if(db) db.style.display = ix ? 'none' : '';
+  const sh=$('#mapshell'); if(sh){ let pref=true; try{ pref = localStorage.getItem('i78-mapdrawer')!=='0'; }catch(e){} sh.classList.toggle('open', ix?false:pref); }
   if(ix){ if($('#panel-map').classList.contains('active')) ensureInrixFrame(); }
   else setTimeout(showMainMap, 50);
+  setTimeout(()=>{ if(window._map) window._map.invalidateSize(); inrixCall(x=>x.__inrix.map.invalidateSize()); }, 220);
 }
 /* Create or refresh the all-datasets map, but only while it is actually visible: a Leaflet map created in a hidden
    container gets a 0x0 size and ends up at world zoom. If that happened anyway, refit once it has a size. */
@@ -1140,59 +1177,86 @@ const RWIS_SITES=[
   const years=hasCR?ST.years.map(y=>[String(y),String(y)]):[];
   const hasIXmap = hasIX && !!INRIX_MAP_SRC;
   if (!hasIXmap) MAPVIEW.v='all';
+  // === Full-width map section with a collapsible left filter drawer ===
+  const mapwrap=h('div',{class:'mapwrap',id:'mapwrap'});
+  // Chrome strip above the map: filter toggle, view switch, fullscreen, open-in-new-tab
+  const chrome=h('div',{class:'mapchrome'});
+  const drawerBtn=h('button',{type:'button',class:'iconbtn on',id:'mapDrawerBtn','aria-pressed':'true'},'☰ Filters');
+  let drawerOpen=true; try{ const v=localStorage.getItem('i78-mapdrawer'); if(v==='0') drawerOpen=false; }catch(e){}
+  drawerBtn.addEventListener('click',()=>{ drawerOpen=!drawerOpen; applyDrawer(); try{ localStorage.setItem('i78-mapdrawer',drawerOpen?'1':'0');}catch(e){} });
+  chrome.append(drawerBtn);
   if (hasIXmap){
-    const vb=(v,label)=>{ const b=h('button',{type:'button',class:'mapbtn','data-view':v,'aria-pressed':'false'},label); b.addEventListener('click',()=>setMapView(v)); return b; };
-    root.append(h('div',{class:'filters mapview',id:'map-view'}, h('span',{},'Map view'), vb('inrix','INRIX travel time'), vb('all','All datasets (crashes, weather, zones)'),
-      (()=>{ const b=h('button',{type:'button',class:'mapbtn map-fullbtn'},'Full screen'); b.addEventListener('click',()=>toggleFullscreen()); return b; })(),
-      h('a',{class:'mapbtn',href:'I78_INRIX_Map.html',target:'_blank',style:'text-decoration:none'},'Open INRIX map in a new tab ↗')));
+    const pill=h('div',{class:'pill',id:'map-view'});
+    const vb=(v,label)=>{ const b=h('button',{type:'button','data-view':v,'aria-pressed':'false'},label); b.addEventListener('click',()=>{ setMapView(v); setTimeout(fitMapHeight,30); }); return b; };
+    pill.append(vb('inrix','INRIX travel time'), vb('all','All datasets'));
+    chrome.append(pill);
   }
-  const f=h('div',{class:'filters',id:'map-filters'},
-    sel('map-basemap','Basemap', Object.entries(BASEMAPS).map(([k,v])=>[k,v.name]), 'basemap', ()=>setBasemap(MAPF.basemap,false)),
-    hasIX? sel('map-metric','Segment color', Object.entries(SEG_METRICS), 'metric', ()=>{ refreshSegments(); rerenderAll(); }) : null,
-    hasCR? sel('map-year','Year', [['all','All years'],...years], 'year', ()=>{ refreshCrashLayers(); rerenderAll(); }) : null,
-    hasCR? sel('map-sev','Severity', [['all','All'],['inj','Injury (K, A, B, C)'],['ka','Fatal or serious (K, A)']], 'sev', ()=>{ refreshCrashLayers(); rerenderAll(); }) : null,
-    hasCR&&hasC? sel('map-cls','Weather class of day', [['all','All'],['adv','Any adverse class'],...CLS.map(c=>[String(c.id),CLS_SHORT[c.id]])], 'cls', ()=>{ refreshCrashLayers(); rerenderAll(); }) : null,
-    hasCR? sel('map-dir','Direction', [['all','Both'],['E','Eastbound'],['W','Westbound']], 'dir', ()=>{ refreshCrashLayers(); rerenderAll(); }) : null,
-    hasCR? sel('map-mode','Crash display', [['points','Points'],['density','Density per 0.5 mi']], 'crashmode', ()=>refreshCrashLayers()) : null,
-    hasCR? sel('map-ccolor','Color crashes by', Object.entries(CRASH_COLOR_MODES), 'ccolor', ()=>refreshCrashLayers()) : null,
-    (()=>{ const r=h('input',{type:'range',min:10,max:100,step:5,value:Math.round(MAPF.opacity*100),title:'Basemap opacity'}); const lab=h('span',{},pct(MAPF.opacity)); r.addEventListener('input',()=>{ MAPF.opacity=r.value/100; lab.textContent=pct(MAPF.opacity); if(MAPLAYERS._base) MAPLAYERS._base.setOpacity(MAPF.opacity); }); return h('label',{},'Basemap opacity', r, lab); })(),
-    (()=>{ const b=h('button',{type:'button',class:'mapbtn map-fullbtn',id:'map-full'},'Full screen'); b.addEventListener('click',()=>toggleFullscreen()); return b; })(),
-    hasIX && !hasIXmap ? h('a',{class:'mapbtn',href:'I78_INRIX_Map.html',target:'_blank',style:'text-decoration:none'},'Open full-page INRIX map ↗') : null,
-    hasCR? chk('Adverse-coded only','adv') : null, hasCR? chk('Truck-involved only','truck') : null, hasCR? chk('Work zone only','wz') : null, hasCR? chk('Possible secondary only','sec') : null);
-  root.append(f);
-  root.append(h('div',{class:'map',id:'mapdiv'}));
-  if (hasIXmap){
-    root.append(h('div',{class:'map',id:'inrixwrap'}));
-    root.append(h('p',{class:'muted',id:'map-ixnote',style:'margin:6px 0;display:none'},'Embedded copy of I78_INRIX_Map.html built from the same data: color by metric, pick a day type and direction, drag the 15-minute slider or press Play, edit the class limits in the legend, click a segment for its distribution. The embedded copy does not keep its state in the page URL; use the new-tab version for a shareable link.'));
+  chrome.append(h('div',{class:'sep'}));
+  chrome.append((()=>{ const b=h('button',{type:'button',class:'iconbtn map-fullbtn'},'⛶ Full screen'); b.addEventListener('click',()=>toggleFullscreen()); return b; })());
+  if (hasIX) chrome.append(h('a',{class:'iconbtn',href:'I78_INRIX_Map.html',target:'_blank',style:'text-decoration:none'},'Open in new tab ↗'));
+  mapwrap.append(chrome);
+  // Shell: drawer + main
+  const shell=h('div',{class:'mapshell'+(drawerOpen?' open':''),id:'mapshell'});
+  function applyDrawer(){ shell.classList.toggle('open', drawerOpen); drawerBtn.setAttribute('aria-pressed', drawerOpen?'true':'false'); setTimeout(()=>{ if(window._map) window._map.invalidateSize(); inrixCall(x=>x.__inrix.map.invalidateSize()); }, 220); }
+  const drawer=h('div',{class:'drawer'});
+  const dinner=h('div',{class:'drawer-inner'}); drawer.append(dinner);
+  const main=h('div',{class:'mapmain'});
+  main.append(h('div',{class:'map',id:'mapdiv'}));
+  if (hasIXmap) main.append(h('div',{class:'map',id:'inrixwrap'}));
+  // bottom-left overlay legend
+  const lg=h('div',{class:'mapoverlay',id:'map-legend'}); main.append(lg);
+  shell.append(drawer, main);
+  mapwrap.append(shell);
+  root.append(mapwrap);
+  // Resize map shell to fit viewport minus chrome
+  function fitMapHeight(){ const hdr=document.querySelector('header.top'); const top = (hdr?hdr.getBoundingClientRect().bottom:120) + chrome.getBoundingClientRect().height + 8; document.documentElement.style.setProperty('--mapchrome', top+'px'); if(window._map) window._map.invalidateSize(); inrixCall(x=>x.__inrix.map.invalidateSize()); }
+  window.addEventListener('resize', fitMapHeight); setTimeout(fitMapHeight, 30);
+
+  // --- Drawer content (same filters as before, laid out stacked) ---
+  const dsel=(id,label,opts,key,onchange)=>{ const s_=h('select',{id}); opts.forEach(([v,l])=>s_.append(h('option',{value:v},l))); s_.value=MAPF[key]; s_.addEventListener('change',()=>{ MAPF[key]=s_.value; onchange(); }); return h('label',{}, h('span',{},label), s_); };
+  const dchk=(label,key)=>{ const c=h('input',{type:'checkbox'}); c.checked=MAPF[key]; c.addEventListener('change',()=>{ MAPF[key]=c.checked; refreshCrashLayers(); rerenderAll(); }); return h('label',{class:'chk'}, c, h('span',{},label)); };
+  dinner.append(h('h3',{},'Basemap'));
+  dinner.append(dsel('map-basemap','Provider', Object.entries(BASEMAPS).map(([k,v])=>[k,v.name]), 'basemap', ()=>setBasemap(MAPF.basemap,false)));
+  dinner.append((()=>{ const r=h('input',{type:'range',min:10,max:100,step:5,value:Math.round(MAPF.opacity*100)}); const lab=h('span',{},'Opacity '+pct(MAPF.opacity)); r.addEventListener('input',()=>{ MAPF.opacity=r.value/100; lab.textContent='Opacity '+pct(MAPF.opacity); if(MAPLAYERS._base) MAPLAYERS._base.setOpacity(MAPF.opacity); }); return h('label',{}, lab, r); })());
+  if (hasIX){ dinner.append(h('h3',{},'INRIX segments'));
+    dinner.append(dsel('map-metric','Color by', Object.entries(SEG_METRICS), 'metric', ()=>{ refreshSegments(); rerenderAll(); })); }
+  if (hasCR){
+    dinner.append(h('h3',{},'Crashes'));
+    const years=ST.years.map(y=>[String(y),String(y)]);
+    dinner.append(dsel('map-year','Year', [['all','All years'],...years], 'year', ()=>{ refreshCrashLayers(); rerenderAll(); }));
+    dinner.append(dsel('map-sev','Severity', [['all','All'],['inj','Injury (K, A, B, C)'],['ka','Fatal or serious (K, A)']], 'sev', ()=>{ refreshCrashLayers(); rerenderAll(); }));
+    if (hasC) dinner.append(dsel('map-cls','Weather class', [['all','All'],['adv','Any adverse class'],...CLS.map(c=>[String(c.id),CLS_SHORT[c.id]])], 'cls', ()=>{ refreshCrashLayers(); rerenderAll(); }));
+    dinner.append(dsel('map-dir','Direction', [['all','Both'],['E','Eastbound'],['W','Westbound']], 'dir', ()=>{ refreshCrashLayers(); rerenderAll(); }));
+    dinner.append(dsel('map-mode','Display', [['points','Points'],['density','Density per 0.5 mi']], 'crashmode', ()=>refreshCrashLayers()));
+    dinner.append(dsel('map-ccolor','Color by', Object.entries(CRASH_COLOR_MODES), 'ccolor', ()=>refreshCrashLayers()));
+    dinner.append(dchk('Adverse-coded only','adv'));
+    dinner.append(dchk('Truck-involved only','truck'));
+    dinner.append(dchk('Work zone only','wz'));
+    dinner.append(dchk('Possible secondary only','sec'));
   }
-  root.append(h('div',{id:'segpanel'}));
-  const lg=h('div',{class:'maplegend',id:'map-legend'});
-  lg.append(h('span',{id:'map-seglegend'}), h('span',{},'EB layers are offset south of the centerline, WB north.'));
+  // Legend contents (same as before, but inside the bottom-left overlay)
+  lg.append(h('span',{id:'map-seglegend'}));
   if (hasCR) lg.append(h('span',{id:'map-crashlegend'}));
-  lg.append(h('span',{}, h('i',{class:'sq',style:'background:'+css('--s1')}), 'EB density'), h('span',{}, h('i',{class:'sq',style:'background:'+css('--s2')}), 'WB density'), h('span',{}, h('i',{style:'background:'+css('--s4')+';opacity:.5'}), 'Slowdown hot spot (size = episodes)'), h('span',{}, h('i',{style:'background:'+css('--s2')+';opacity:.6'}), 'COOP station'), h('span',{}, h('i',{style:'background:'+css('--s3')+';opacity:.6'}), 'CoCoRaHS station (size = coverage)'), h('span',{}, h('i',{class:'sq',style:'background:'+css('--s1')+';opacity:.3'}), 'Zone band'));
-  root.append(lg);
-  // Second legend row: the VSL / ITS assets, drawn from DATA.assets so the swatch shows the real shape and color.
+  lg.append(h('span',{}, h('i',{class:'sq',style:'background:'+css('--s1')}), 'EB density'), h('span',{}, h('i',{class:'sq',style:'background:'+css('--s2')}), 'WB density'), h('span',{}, h('i',{style:'background:'+css('--s4')+';opacity:.5'}), 'Slowdown hot spot'), h('span',{}, h('i',{style:'background:'+css('--s2')+';opacity:.6'}), 'COOP'), h('span',{}, h('i',{style:'background:'+css('--s3')+';opacity:.6'}), 'CoCoRaHS'), h('span',{}, h('i',{class:'sq',style:'background:'+css('--s1')+';opacity:.3'}), 'Zone band'));
   if (DATA.assets && (DATA.assets.folders||[]).length){
-    const alg=h('div',{class:'maplegend',id:'map-assetlegend',style:'margin-top:2px'});
-    alg.append(h('span',{style:'font-weight:600;color:var(--ink)'},'VSL / ITS assets:'));
     DATA.assets.folders.forEach(f=>{ const s=ASSET_KINDS[f.kind]; if(!s) return; const el=h('span',{title:f.name});
-      const holder=h('i',{style:'background:transparent;border:0;width:16px;height:16px'}); holder.innerHTML=assetShapeSvg(s.shape, css(s.var));
-      el.append(holder, document.createTextNode(s.label+' ('+f.features.length+')')); alg.append(el); });
-    root.append(alg);
-  }
-  root.append(h('p',{class:'muted',id:'map-status',style:'margin:4px 0'},''), h('p',{class:'muted',id:'map-basenote',style:'margin:2px 0'},''));
-  root.append(h('div',{class:'note'}, COR.study_limits_note));
-  if (hasIXmap) setMapView(MAPVIEW.v);
+      const holder=h('i',{style:'background:transparent;border:0;width:16px;height:16px;border-radius:0'}); holder.innerHTML=assetShapeSvg(s.shape, css(s.var));
+      el.append(holder, document.createTextNode(s.label)); lg.append(el); }); }
+
+  // Below-map footer (kept inside the 1380 wrap)
+  const footer=h('div',{class:'mapsection-footer'});
+  root.append(footer);
+  if (hasIXmap){ setMapView(MAPVIEW.v); }
   // straight-line diagram, driven by the same filters
   const g1=h('div',{class:'grid g1',style:'margin-top:14px'});
   chartCard(g1,{title:'Straight-line diagram: crashes per 0.5 mile and INRIX segment performance', sub:'Top: filtered crashes by milepost, eastbound up and westbound down. Bands: INRIX segments colored by the metric selected above. Bottom: interchanges and VSL zones.', legend:[{name:'Eastbound crashes',var:'--s1'},{name:'Westbound crashes',var:'--s2'}],
     render:el=>stripChart(el,{pts:crashFilter(), metric:hasIX?MAPF.metric:'p_lt50', metricLabel:SEG_METRICS[hasIX?MAPF.metric:'p_lt50']}),
     table: hasCR? {columns:['MP bin','EB crashes','EB injury','EB truck','EB adverse','WB crashes','WB injury','WB truck','WB adverse'], rows:CR.mp_bins.map(b=>[b.mp+' to '+(b.mp+0.5).toFixed(1),b.E,b.E_inj,b.E_truck,b.E_adv,b.W,b.W_inj,b.W_truck,b.W_adv]), numeric:[0,1,1,1,1,1,1,1,1]} : null});
-  root.append(g1);
+  footer.append(g1);
   const g2=h('div',{class:'grid g2',style:'margin-top:14px'});
   g2.append(h('div',{class:'card'}, h('h3',{},'VSL zones (config/corridor.json)'), buildTable({columns:['Zone','Name','MP start','MP end','Notes'], rows:COR.zones.map((z,i)=>[h('span',{}, h('i',{style:`display:inline-block;width:10px;height:10px;border-radius:2px;background:${css(ZONE_VARS[i%ZONE_VARS.length])};margin-right:6px`}), z.id),z.name,z.mp_start,z.mp_end,z.note]), numeric:[0,0,1,1,0]}), h('p',{class:'note'}, COR.note_on_zones)));
   g2.append(h('div',{class:'card'}, h('h3',{},'Candidate RWIS sites'), h('p',{class:'muted'},'Proposed sensor locations shown as yellow labels on the map; mileposts are approximate until a field review.'), buildTable({columns:['Site','MP','Location','Why'], rows:RWIS_SITES.map(r=>[r.id,r.mp,r.name,r.why]), numeric:[0,1,0,0]})));
-  root.append(g2);
+  footer.append(g2);
 })();
 
 /* ------------------------------------------------------------------ */
