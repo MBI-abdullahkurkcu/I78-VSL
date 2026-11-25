@@ -11,6 +11,7 @@ Working repository for the I-78 VSL concept-of-operations work in western New Je
 | `I78_INRIX_Map.html` | Full-page INRIX map (built from `dashboard/inrix_map_template.html`, modelled on the Traffic-Scripts `inrix_tt_map` page): segments colored by travel-time index, planning-time index, speed, travel time per mile or whole-period slowdown shares; day-type, direction and 15-minute time-of-day slider with play; legend with editable class limits and click-to-hide classes; click a segment for its time-of-day percentile bands, travel-time distribution and worst episodes. State is kept in the URL hash. The same page is embedded in tab 2 of the dashboard; the embedded copy follows the dashboard theme and does not write the URL hash. |
 | `scripts/fetch_geometry.py` | Road-following geometry for the 24 INRIX segments from the public OSRM router (same method as the Santa Fe corridor map), cached per TMC in `dashboard/data/osrm_cache/` and written to `dashboard/data/tmc_geometry.json`. Run once, or again when TMCs change. |
 | `scripts/stats_tests.py` | Statistical tests on a daily panel (rate ratios with CIs, quasi-Poisson regression, Kruskal-Wallis / Mann-Whitney, Spearman matrix, dose-response bins, lags, monthly). Needs scipy. Called by the builder. |
+| `scripts/parse_kmz.py` | Parses the newest KMZ in `dashboard/data/KMZs/` (VSL and existing ITS asset locations) into `dashboard/data/vsl_assets.json`. The dashboard draws one toggleable layer per folder (VSL signs, zone limits, speed limits, ramp exits, transformers, CSS, DMS, fiber optic cable); each type uses a distinct SVG shape and color. Re-run when a new KMZ is dropped in. |
 | `dashboard/vendor/` | Leaflet 1.9.4 JS and CSS (BSD-2-Clause), inlined into the page at build time. |
 | `Input Data/Climate*` | NOAA GHCN-Daily pull, 17 stations within 8 mi of the corridor, 2021-2025. |
 | `Input Data/Crash_*` | NJDOT crash tables (Crash, Vehicle, Unit, Person, ...) for the I-78 municipalities. Only route-78 rows are used; no person-level fields reach the dashboard. |
@@ -25,6 +26,7 @@ Working repository for the I-78 VSL concept-of-operations work in western New Je
 
 ```
 python -I scripts/fetch_geometry.py     # once, or when the TMC list changes (needs internet)
+python -I scripts/parse_kmz.py          # only when a new KMZ lands in dashboard/data/KMZs/
 python -I scripts/preprocess_inrix.py   # only when new INRIX files arrive
 python -I scripts/build_dashboard.py    # always
 ```

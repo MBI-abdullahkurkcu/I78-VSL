@@ -88,6 +88,15 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .seg-tip{font-size:12px}
 .leaflet-tooltip.seg-tip{border-color:var(--border);background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
 .ic-label{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:10px;color:var(--ink-2);white-space:nowrap}
+.vsl-asset-icon{background:transparent;border:0;overflow:visible}
+.vsl-asset-icon svg{display:block}
+#assets{position:absolute;right:10px;top:10px;z-index:700;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);padding:7px 9px;font-size:11.5px;max-width:230px}
+#assets h3{margin:0 0 4px;font-size:12px;font-weight:650}
+#assets label{display:flex;align-items:center;gap:6px;padding:2px 2px;border-radius:4px;cursor:pointer;user-select:none}
+#assets label:hover{background:var(--surface-2)}
+#assets .sw{width:18px;height:18px;flex:none;display:inline-block}
+#assets .ln{width:18px;height:3px;background:currentColor;border-radius:2px;display:inline-block}
+body.panel-open #assets{display:none}
 @media (max-width:760px){ #panel{width:calc(100% - 20px)} .controls input[type=range]{width:140px} #legend{min-width:0} }
 </style>
 </head>
@@ -119,6 +128,7 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 <div id="wrap">
   <div id="map"></div>
   <div id="legend"></div>
+  <div id="assets"></div>
   <div id="hint">Hover a segment for its value · click for the travel-time distribution · Esc closes</div>
   <div id="panel" aria-live="polite">
     <div class="head"><b id="pRoad"></b><span class="meta" id="pMeta"></span><button class="close" id="pClose">Close</button></div>
@@ -202,6 +212,47 @@ map.on('click',()=>unpin());
 document.addEventListener('keydown',e=>{ if(e.key!=='Escape') return; if(pinId) unpin(); else if(EMBEDDED){ try{ window.parent.toggleFullscreen(false); }catch(x){} } });
 // interchanges
 (DATA.interchanges||[]).forEach(x=>{ L.circleMarker([x.lat,x.lon],{radius:4,color:css('--ink'),fillColor:css('--surface'),fillOpacity:1,weight:1.5,interactive:false}).addTo(map); L.marker([x.lat,x.lon],{icon:L.divIcon({className:'',html:`<span class="ic-label">${x.short}</span>`,iconSize:[60,14],iconAnchor:[30,-6]}),interactive:false}).addTo(map); });
+
+// VSL / ITS assets from the KMZs, one toggleable layer per feature type
+const ASSET_KINDS={
+  vsl_sign:    {label:'VSL sign',            shape:'diamond',  color:'#2a78d6'},
+  zone_limit:  {label:'Zone limit sign',     shape:'triangle', color:'#6250d6'},
+  speed_limit: {label:'Static speed limit',  shape:'square',   color:'#eb6834'},
+  ramp_exit:   {label:'Ramp exit sign',      shape:'pentagon', color:'#1baf7a'},
+  transformer: {label:'Transformer',         shape:'bolt',     color:'#eda100'},
+  css:         {label:'CSS cabinet',         shape:'circle',   color:'#e87ba4'},
+  foc:         {label:'Fiber optic cable',   shape:'line',     color:'#e34948'},
+  dms:         {label:'DMS',                 shape:'hex',      color:'#008300'}};
+function assetShapeSvg(shape,color){
+  const S={diamond:'<path d="M10 2 L18 10 L10 18 L2 10 Z"/>', triangle:'<path d="M10 2 L18 17 L2 17 Z"/>', square:'<rect x="3" y="3" width="14" height="14"/>', pentagon:'<path d="M10 2 L18 8 L15 18 L5 18 L2 8 Z"/>', bolt:'<path d="M11 2 L4 11 L9 11 L8 18 L16 9 L10 9 L11 2 Z"/>', circle:'<circle cx="10" cy="10" r="7"/>', hex:'<path d="M10 2 L17 6 L17 14 L10 18 L3 14 L3 6 Z"/>'};
+  return `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 0 1.5px rgba(0,0,0,.35))"><g fill="${color}" stroke="#111" stroke-width="1" stroke-linejoin="round">${S[shape]||S.circle}</g></svg>`;
+}
+const ASSET_LAYERS={};
+(DATA.assets||[]).forEach(folder=>{
+  const spec=ASSET_KINDS[folder.kind]||{label:folder.name, shape:'circle', color:'#888'};
+  const lg=L.layerGroup();
+  folder.features.forEach(feat=>{
+    if(feat.coords && feat.coords.length){
+      L.polyline(feat.coords,{color:spec.color,weight:4,opacity:.85,dashArray:spec.shape==='line'?'2 5':null}).bindTooltip(`<b>${spec.label}</b><br>${feat.name||''}`,{sticky:true}).addTo(lg);
+    } else if (feat.lat!=null){
+      const icon=L.divIcon({className:'vsl-asset-icon',html:assetShapeSvg(spec.shape,spec.color),iconSize:[20,20],iconAnchor:[10,10]});
+      L.marker([feat.lat,feat.lon],{icon,title:feat.name||spec.label}).bindTooltip(`<b>${spec.label}</b><br>${feat.name||''}`,{sticky:true}).addTo(lg);
+    }
+  });
+  ASSET_LAYERS[folder.kind]=lg;
+  if(folder.kind==='vsl_sign' || folder.kind==='zone_limit') lg.addTo(map);
+});
+// Build the asset toggle panel
+(function(){ const box=$('assets'); if(!DATA.assets||!DATA.assets.length){ box.style.display='none'; return; }
+  box.innerHTML='<h3>VSL / ITS assets</h3>';
+  DATA.assets.forEach(folder=>{ const spec=ASSET_KINDS[folder.kind]||{label:folder.name,shape:'circle',color:'#888'}; const lg=ASSET_LAYERS[folder.kind]; const on=map.hasLayer(lg);
+    const cb=document.createElement('input'); cb.type='checkbox'; cb.checked=on;
+    const sw=document.createElement('span'); sw.className='sw'; sw.innerHTML=spec.shape==='line'?`<span class="ln" style="color:${spec.color}"></span>`:assetShapeSvg(spec.shape,spec.color);
+    const txt=document.createElement('span'); txt.textContent=`${spec.label} (${folder.features.length})`;
+    const row=document.createElement('label'); row.append(cb,sw,txt);
+    cb.addEventListener('change',()=>{ if(cb.checked) lg.addTo(map); else map.removeLayer(lg); });
+    box.append(row); });
+})();
 map.fitBounds(L.latLngBounds(T.flatMap(t=>t.geom)).pad(0.08));
 L.control.scale({imperial:true,metric:false}).addTo(map);
 

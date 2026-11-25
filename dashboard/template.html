@@ -153,6 +153,8 @@ ul.tight{margin:.2em 0 .6em 1.2em;padding:0} ul.tight li{margin:.15em 0}
 .maplegend .ramp i{border-radius:0;width:14px;height:10px}
 .zone-label{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:.72rem;font-weight:600;color:var(--ink);white-space:nowrap}
 .rwis-label{background:var(--warn);color:#1a1a1a;border-radius:4px;padding:1px 5px;font-size:.7rem;font-weight:700;white-space:nowrap}
+.vsl-asset-icon{background:transparent;border:0;overflow:visible}
+.vsl-asset-icon svg{display:block}
 .stat-sig{color:var(--good);font-weight:600} .stat-ns{color:var(--muted)}
 .leaflet-container{background:var(--surface-2)}
 .leaflet-container{font:inherit}
@@ -963,6 +965,8 @@ function initMap(){
   const rwis=L.layerGroup();
   RWIS_SITES.forEach(r=>{ const ll=mpToLatLng(r.mp); L.marker(ll,{icon:L.divIcon({className:'',html:`<span class="rwis-label">RWIS ${r.id}</span>`,iconSize:[60,18],iconAnchor:[30,9]})}).bindPopup(`<b>Candidate RWIS ${r.id}: ${r.name}</b> (MP ${r.mp})<br>${r.why}`).addTo(rwis); });
   overlays['Candidate RWIS sites']=rwis;
+  // VSL / ITS assets from the KMZs, one layer per folder, a distinct SVG shape per kind
+  addAssetLayers(map, overlays);
   L.control.layers(null, overlays, {collapsed:false}).addTo(map);
   L.control.scale({imperial:true, metric:false}).addTo(map);
   window._mapBounds=L.latLngBounds(COR.centerline).pad(0.25); window._mapSized = el.clientWidth>0;
@@ -1073,6 +1077,55 @@ function bandChart(el,{D, daytype}){
   hit.addEventListener('mousemove',ev=>{ const rb=svg.getBoundingClientRect(); const i=Math.max(0,Math.min(23,Math.round((ev.clientX-rb.left)*(W/rb.width)-pad.l)/iw*23)); const r=rows[i]; tip.show(`<b>${HOURS[i]}:00</b>${r?`<br>p5 ${fmt(r[0],2)} · p25 ${fmt(r[1],2)} · <b>median ${fmt(r[2],2)}</b> · p75 ${fmt(r[3],2)} · p95 ${fmt(r[4],2)} min`:'<br>no data'}`,(ev.clientX-rb.left),ev.clientY-rb.top); }); hit.addEventListener('mouseleave',()=>tip.hide()); svg.append(hit);
   el.append(svg);
 }
+/* VSL / ITS asset catalogue -----------------------------------------
+   Each kind in the KMZs gets its own shape so the eye can tell them apart without reading labels.
+   Shape is baked into an SVG, color follows the dataviz series tokens, size stays constant 20 px. */
+const ASSET_KINDS={
+  vsl_sign:    {label:'VSL sign',            shape:'diamond',  var:'--s1'},
+  zone_limit:  {label:'Zone limit sign',     shape:'triangle', var:'--s7'},
+  speed_limit: {label:'Static speed limit',  shape:'square',   var:'--s2'},
+  ramp_exit:   {label:'Ramp exit sign',      shape:'pentagon', var:'--s3'},
+  transformer: {label:'Transformer',         shape:'bolt',     var:'--s4'},
+  css:         {label:'CSS cabinet',         shape:'circle',   var:'--s5'},
+  foc:         {label:'Fiber optic cable',   shape:'line',     var:'--s8'},
+  dms:         {label:'DMS',                 shape:'hex',      var:'--s6'}};
+function assetShapeSvg(shape,color){
+  const S={
+    diamond:  '<path d="M10 2 L18 10 L10 18 L2 10 Z"/>',
+    triangle: '<path d="M10 2 L18 17 L2 17 Z"/>',
+    square:   '<rect x="3" y="3" width="14" height="14"/>',
+    pentagon: '<path d="M10 2 L18 8 L15 18 L5 18 L2 8 Z"/>',
+    bolt:     '<path d="M11 2 L4 11 L9 11 L8 18 L16 9 L10 9 L11 2 Z"/>',
+    circle:   '<circle cx="10" cy="10" r="7"/>',
+    hex:      '<path d="M10 2 L17 6 L17 14 L10 18 L3 14 L3 6 Z"/>'};
+  const g = S[shape] || S.circle;
+  // outer white casing so markers read on any basemap, then the colored fill with a thin dark stroke
+  return `<svg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0 0 1.5px rgba(0,0,0,.35))"><g fill="${color}" stroke="#111" stroke-width="1" stroke-linejoin="round">${g}</g></svg>`;
+}
+function addAssetLayers(map, overlays){
+  const assets = (DATA.assets && DATA.assets.folders) || DATA.assets || [];
+  if (!assets || !assets.length) return;
+  assets.forEach(folder=>{
+    const spec = ASSET_KINDS[folder.kind] || {label:folder.name, shape:'circle', var:'--muted'};
+    const lg = L.layerGroup();
+    const color = css(spec.var);
+    folder.features.forEach(feat=>{
+      if (feat.coords && feat.coords.length){
+        // line feature (fiber optic cable segments)
+        L.polyline(feat.coords, {color, weight:4, opacity:.85, dashArray: spec.shape==='line'?'2 5':null})
+          .bindTooltip(`<b>${spec.label}</b><br>${feat.name||''}`,{sticky:true}).addTo(lg);
+      } else if (feat.lat!=null){
+        const icon = L.divIcon({className:'vsl-asset-icon', html: assetShapeSvg(spec.shape, color), iconSize:[20,20], iconAnchor:[10,10]});
+        L.marker([feat.lat, feat.lon], {icon, title: feat.name||spec.label})
+          .bindTooltip(`<b>${spec.label}</b><br>${feat.name||''}`,{sticky:true}).addTo(lg);
+      }
+    });
+    const key = `${spec.label} (${folder.features.length})`;
+    overlays[key] = lg;
+    // show VSL + zone limits by default; keep heavy / infrastructure layers off until asked
+    if (folder.kind==='vsl_sign' || folder.kind==='zone_limit') lg.addTo(map);
+  });
+}
 const RWIS_SITES=[
   {id:'A', mp:9.0, name:'Jugtown Mountain summit', why:'Highest point, first to freeze and first to fog; both COOP temperature stations are in valleys so ridge-top pavement temperature is unobserved.'},
   {id:'B', mp:7.8, name:'Westbound descent to Bloomsbury', why:'Downgrade crash hot spot; a grip sensor here drives the grade-adjusted limit for trucks.'},
@@ -1118,6 +1171,15 @@ const RWIS_SITES=[
   if (hasCR) lg.append(h('span',{id:'map-crashlegend'}));
   lg.append(h('span',{}, h('i',{class:'sq',style:'background:'+css('--s1')}), 'EB density'), h('span',{}, h('i',{class:'sq',style:'background:'+css('--s2')}), 'WB density'), h('span',{}, h('i',{style:'background:'+css('--s4')+';opacity:.5'}), 'Slowdown hot spot (size = episodes)'), h('span',{}, h('i',{style:'background:'+css('--s2')+';opacity:.6'}), 'COOP station'), h('span',{}, h('i',{style:'background:'+css('--s3')+';opacity:.6'}), 'CoCoRaHS station (size = coverage)'), h('span',{}, h('i',{class:'sq',style:'background:'+css('--s1')+';opacity:.3'}), 'Zone band'));
   root.append(lg);
+  // Second legend row: the VSL / ITS assets, drawn from DATA.assets so the swatch shows the real shape and color.
+  if (DATA.assets && (DATA.assets.folders||[]).length){
+    const alg=h('div',{class:'maplegend',id:'map-assetlegend',style:'margin-top:2px'});
+    alg.append(h('span',{style:'font-weight:600;color:var(--ink)'},'VSL / ITS assets:'));
+    DATA.assets.folders.forEach(f=>{ const s=ASSET_KINDS[f.kind]; if(!s) return; const el=h('span',{title:f.name});
+      const holder=h('i',{style:'background:transparent;border:0;width:16px;height:16px'}); holder.innerHTML=assetShapeSvg(s.shape, css(s.var));
+      el.append(holder, document.createTextNode(s.label+' ('+f.features.length+')')); alg.append(el); });
+    root.append(alg);
+  }
   root.append(h('p',{class:'muted',id:'map-status',style:'margin:4px 0'},''), h('p',{class:'muted',id:'map-basenote',style:'margin:2px 0'},''));
   root.append(h('div',{class:'note'}, COR.study_limits_note));
   if (hasIXmap) setMapView(MAPVIEW.v);

@@ -535,6 +535,17 @@ def cross_analysis(climate, inrix, crashes):
     return out
 
 
+def load_vsl_assets():
+    """Load dashboard/data/vsl_assets.json (written by scripts/parse_kmz.py from the KMZs in dashboard/data/KMZs/)."""
+    p = os.path.join(ROOT, "dashboard", "data", "vsl_assets.json")
+    if not os.path.exists(p):
+        return {"status": "missing", "folders": [], "meta": {}}
+    with open(p, encoding="utf-8") as f:
+        data = json.load(f)
+    data["status"] = "loaded"
+    return data
+
+
 def main():
     with open(CORRIDOR, encoding="utf-8") as f:
         corridor = json.load(f)
@@ -544,9 +555,10 @@ def main():
     workzones = load_workzones()
     cross = cross_analysis(climate, inrix, crashes)
     climate.pop("_cls_by_date", None)
+    assets = load_vsl_assets()
     data = {
         "meta": {"generated": dt.datetime.now().strftime("%Y-%m-%d %H:%M"), "repo": "I78-VSL", "builder": "scripts/build_dashboard.py"},
-        "corridor": corridor, "climate": climate, "inrix": inrix, "crashes": crashes, "workzones": workzones, "cross": cross,
+        "corridor": corridor, "climate": climate, "inrix": inrix, "crashes": crashes, "workzones": workzones, "cross": cross, "assets": assets,
     }
 
     os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)
@@ -623,6 +635,7 @@ def build_inrix_map(data, corridor):
         "tmcs": tmcs, "daytypes": bins["daytypes"], "bins": bins["bins"],
         "events": [e for e in inrix.get("events", [])],
         "interchanges": [{"mp": x["mp"], "lat": x["lat"], "lon": x["lon"], "short": short(x["label"]), "label": x["label"]} for x in corridor["interchanges"]],
+        "assets": data.get("assets", {}).get("folders", []),
     }
     with open(tpl, encoding="utf-8") as f:
         html = f.read()
