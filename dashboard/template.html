@@ -127,6 +127,14 @@ table.t td.num,table.t th.num{text-align:right;font-variant-numeric:tabular-nums
 .badge.good{background:rgba(12,163,12,.15);color:var(--ink)}
 .badge.crit{background:rgba(208,59,59,.14);color:var(--ink)}
 ul.tight{margin:.2em 0 .6em 1.2em;padding:0} ul.tight li{margin:.15em 0}
+/* ⓘ tooltip pill used on tab 3 cards to explain what each chart or table is saying. */
+.helpbtn{appearance:none;background:var(--surface-2);color:var(--ink-2);border:1px solid var(--border);border-radius:50%;width:22px;height:22px;font:inherit;font-size:12px;font-weight:700;cursor:help;display:inline-flex;align-items:center;justify-content:center;line-height:1;position:relative;flex:none}
+.helpbtn:hover,.helpbtn:focus-visible{color:var(--ink);border-color:var(--accent);outline:none}
+.helptip{position:absolute;right:0;top:calc(100% + 6px);min-width:240px;max-width:360px;background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:10px 12px;font-size:.78rem;line-height:1.45;font-weight:400;text-align:left;z-index:200;display:none;white-space:normal;letter-spacing:0;text-transform:none}
+.helpbtn[aria-expanded="true"] .helptip,.helpbtn:hover .helptip,.helpbtn:focus-visible .helptip{display:block}
+.helptip b{color:var(--ink);font-weight:650}
+.helptip p{margin:0 0 .4em}
+.helptip p:last-child{margin-bottom:0}
 .map{height:calc(100vh - 150px);min-height:520px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--surface-2)}
 /* Full-bleed map section: the map and its filter drawer fill the viewport width while the rest of the page keeps the 1380 px wrap. */
 .mapwrap{position:relative;width:100vw;left:50%;right:50%;margin-left:-50vw;margin-right:-50vw;background:var(--surface-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -328,13 +336,16 @@ const RENDERERS = [];
 function rerenderAll(){ for (const r of RENDERERS) { try { r(); } catch(e){ console.error(e); } } }
 let resizeT=null; window.addEventListener('resize', ()=>{ clearTimeout(resizeT); resizeT=setTimeout(rerenderAll, 150); });
 
-function chartCard(parent, {title, sub, full=false, render, table, legend}){
+function chartCard(parent, {title, sub, full=false, render, table, legend, help}){
   const card = h('div', {class:'card'+(full?' full':'')});
   const tog = h('div',{class:'toggle'});
   const bChart = h('button',{type:'button','aria-pressed':'true'},'Chart');
   const bTable = h('button',{type:'button','aria-pressed':'false'},'Table');
   tog.append(bChart,bTable);
-  const head = h('div',{class:'card-head'}, h('div',{}, h('h3',{},title), sub? h('div',{class:'sub'},sub):null), table? tog : null);
+  const headRight = h('div',{style:'display:flex;align-items:center;gap:8px'});
+  if (help) headRight.append(helpIcon(help));
+  if (table) headRight.append(tog);
+  const head = h('div',{class:'card-head'}, h('div',{}, h('h3',{},title), sub? h('div',{class:'sub'},sub):null), headRight);
   const chartWrap = h('div',{class:'chartview'});
   const legendEl = legend ? h('div',{class:'legend'}) : null;
   const body = h('div',{class:'chart'});
@@ -349,6 +360,16 @@ function chartCard(parent, {title, sub, full=false, render, table, legend}){
   bTable.onclick=()=>{ bChart.setAttribute('aria-pressed','false'); bTable.setAttribute('aria-pressed','true'); chartWrap.classList.add('hide'); tableWrap.classList.add('show'); };
   requestAnimationFrame(doRender);
   return card;
+}
+/* Build the ⓘ help pill. `html` is sanitized at author time (we write the strings), so it can hold inline HTML
+   like <b>, <em>, <p>. Click toggles "pinned open" so a reader can take their time; hover also opens. */
+function helpIcon(html){
+  const b = h('button',{type:'button',class:'helpbtn','aria-label':'What does this show?','aria-expanded':'false'}, 'ⓘ');
+  const tip = h('span',{class:'helptip',role:'tooltip'}); tip.innerHTML = html;
+  b.append(tip);
+  b.addEventListener('click', e=>{ e.stopPropagation(); const open = b.getAttribute('aria-expanded')==='true'; b.setAttribute('aria-expanded', open?'false':'true'); });
+  document.addEventListener('click', ()=>b.setAttribute('aria-expanded','false'));
+  return b;
 }
 function buildTable({columns, rows, numeric}){
   const wrap = h('div',{class:'tbl-scroll'});
@@ -565,9 +586,40 @@ function segMetric(t,m){ return m==='episodes' ? ((IX.worst_tmc_counts||{})[t.tm
 function segFmt(m,v){ return m==='speed_mean'? fmt(v,1)+' mph' : m==='episodes'? fmt(v)+' episodes' : pct(v,1); }
 // milepost → position along the configured centerline (haversine-scaled)
 const COR_MP_MAX = Math.max(...COR.interchanges.map(x=>x.mp));
+/* Prefer real NJDOT mileposts (fetched by scripts/fetch_mileposts.py) when available: they are an ordered list of
+   {mp, lat, lon} at 0.05 mi spacing, averaged between EB and WB alignments. Fall back to the proportional-distance
+   method on the corridor centerline so the dashboard still builds without the fetch. */
+const MP_POINTS = (()=>{ const m=DATA.mileposts; const pts = Array.isArray(m) ? m : (m && m.points); return (pts && pts.length) ? pts.slice().sort((a,b)=>a.mp-b.mp) : null; })();
 const COR_CUM = (()=>{ const pts=COR.centerline; const d=[0]; const R=3958.8, rad=x=>x*Math.PI/180; for(let i=1;i<pts.length;i++){ const [a,b]=pts[i-1],[c,e]=pts[i]; const dl=rad(c-a), dn=rad(e-b); const h2=Math.sin(dl/2)**2+Math.cos(rad(a))*Math.cos(rad(c))*Math.sin(dn/2)**2; d.push(d[i-1]+2*R*Math.asin(Math.sqrt(h2))); } const tot=d[d.length-1]||1; return d.map(x=>x/tot*COR_MP_MAX); })();
-function mpToLatLng(mp){ const pts=COR.centerline; mp=Math.max(0,Math.min(COR_MP_MAX,mp)); for(let i=1;i<pts.length;i++){ if(mp<=COR_CUM[i]){ const t=(mp-COR_CUM[i-1])/((COR_CUM[i]-COR_CUM[i-1])||1); return [pts[i-1][0]+(pts[i][0]-pts[i-1][0])*t, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*t]; } } return pts[pts.length-1]; }
+function mpToLatLng(mp){
+  if (MP_POINTS){
+    const lo=MP_POINTS[0].mp, hi=MP_POINTS[MP_POINTS.length-1].mp; const m=Math.max(lo,Math.min(hi,mp));
+    // binary search for the pair bracketing m
+    let a=0, b=MP_POINTS.length-1;
+    while (b-a>1){ const k=(a+b)>>1; if (MP_POINTS[k].mp<=m) a=k; else b=k; }
+    const p=MP_POINTS[a], q=MP_POINTS[b]; const t=(q.mp===p.mp)?0:(m-p.mp)/(q.mp-p.mp);
+    return [p.lat+(q.lat-p.lat)*t, p.lon+(q.lon-p.lon)*t];
+  }
+  const pts=COR.centerline; mp=Math.max(0,Math.min(COR_MP_MAX,mp)); for(let i=1;i<pts.length;i++){ if(mp<=COR_CUM[i]){ const t=(mp-COR_CUM[i-1])/((COR_CUM[i]-COR_CUM[i-1])||1); return [pts[i-1][0]+(pts[i][0]-pts[i-1][0])*t, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*t]; } } return pts[pts.length-1];
+}
 function mpPath(m0,m1,step=0.1){ const out=[mpToLatLng(m0)]; for(let m=Math.ceil(m0/step)*step; m<m1; m+=step) out.push(mpToLatLng(m)); out.push(mpToLatLng(m1)); return out; }
+/* Project (lat,lon) onto the NJDOT alignment and return the real milepost of the closest point. Falls back to
+   the proportional-distance method on COR.centerline if mileposts aren't loaded. */
+function latLngToMp(lat, lon){
+  const pts = MP_POINTS ? MP_POINTS.map(p=>[p.lat, p.lon]) : COR.centerline;
+  const mps = MP_POINTS ? MP_POINTS.map(p=>p.mp) : COR_CUM;
+  const latm = 111.0, lonm = 111.0*Math.cos(lat*Math.PI/180);
+  let best={d2:Infinity, mp:mps[0], snapMi:0};
+  for(let i=1;i<pts.length;i++){
+    const ax=pts[i-1][1], ay=pts[i-1][0], bx=pts[i][1], by=pts[i][0];
+    const vx=(bx-ax)*lonm, vy=(by-ay)*latm; const wx=(lon-ax)*lonm, wy=(lat-ay)*latm;
+    const vv=vx*vx+vy*vy; let t = vv>0 ? (vx*wx+vy*wy)/vv : 0; t=Math.max(0,Math.min(1,t));
+    const px=ax+(bx-ax)*t, py=ay+(by-ay)*t;
+    const dx=(lon-px)*lonm, dy=(lat-py)*latm; const d2=dx*dx+dy*dy;
+    if (d2<best.d2) best = {d2, mp: mps[i-1] + (mps[i]-mps[i-1])*t, snapMi: Math.sqrt(d2)/1.60934};
+  }
+  return best;
+}
 
 /* ------------------------------------------------------------------ */
 /* Tabs                                                                */
@@ -1325,48 +1377,48 @@ function buildStats(root){
   const g=h('div',{class:'grid g2x',style:'margin-top:14px'});
   // ---- rate ratio chart
   if (S.rate_ratios){ const A=S.rate_ratios.all.rows, I=(S.rate_ratios.injury||{}).rows||[], T=(S.rate_ratios.truck||{}).rows||[];
-    chartCard(g,{title:'Crash rate ratio by weather class of the day, with 95% confidence intervals', sub:'Crashes per day in the class ÷ crashes per dry day (log scale). An interval that excludes 1 is statistically significant.', legend:[{name:'All crashes',var:'--s1'},{name:'Injury crashes',var:'--s2'},{name:'Truck-involved',var:'--s3'}],
+    chartCard(g,{title:'Crash rate ratio by weather class of the day, with 95% confidence intervals', sub:'Crashes per day in the class ÷ crashes per dry day (log scale). An interval that excludes 1 is statistically significant.', legend:[{name:'All crashes',var:'--s1'},{name:'Injury crashes',var:'--s2'},{name:'Truck-involved',var:'--s3'}], help:'<p><b>What it shows.</b> For each weather class of the day, the crash rate per day divided by the dry-day crash rate.</p><p><b>How to read.</b> A dot at 2× means twice as many crashes per day. The horizontal line is the 95% confidence interval; if the line does not cross 1×, the difference is statistically significant.</p><p><b>What to look for.</b> Classes with intervals clearly above 1× (heavy rain, light snow) are where a weather-responsive limit has a real target.</p>',
       render:el=>ciChart(el,{rows:A.filter(r=>r.cls>0).map(r=>({label:`${clsLab(r.cls)} (${r.days} d)`, vals:[{v:r.rr,lo:r.rr_lo,hi:r.rr_hi,note:'p = '+fmtP(r.p)}, (()=>{const q=I.find(x=>x.cls===r.cls)||{}; return q.rr!=null?{v:q.rr,lo:q.rr_lo,hi:q.rr_hi,note:'p = '+fmtP(q.p)}:null;})(), (()=>{const q=T.find(x=>x.cls===r.cls)||{}; return q.rr!=null?{v:q.rr,lo:q.rr_lo,hi:q.rr_hi,note:'p = '+fmtP(q.p)}:null;})()]})), series:[{name:'All crashes',var:'--s1'},{name:'Injury crashes',var:'--s2'},{name:'Truck-involved',var:'--s3'}], log:true, refLine:1, xFmt:v=>fmt(v,v<1?2:0)+'×'}),
       table:{columns:['Class','Days','Crashes','Rate / 100 d','Rate 95% CI','RR vs dry','RR 95% CI','p','Injury RR','Injury 95% CI','Injury p','Truck RR','Truck p'], rows:A.map(r=>{ const q=I.find(x=>x.cls===r.cls)||{}, t=T.find(x=>x.cls===r.cls)||{}; return [clsLab(r.cls),r.days,r.n,fmt(r.rate_per_100d,1),fmt(r.rate_lo,1)+' to '+fmt(r.rate_hi,1),fmt(r.rr,2),r.rr_lo!=null?fmt(r.rr_lo,2)+' to '+fmt(r.rr_hi,2):'–',sigSpan(r.p),fmt(q.rr,2),q.rr_lo!=null?fmt(q.rr_lo,2)+' to '+fmt(q.rr_hi,2):'–',sigSpan(q.p),fmt(t.rr,2),sigSpan(t.p)]; }), numeric:[0,1,1,1,1,1,1,1,1,1,1,1,1]}}); }
   // ---- adjusted model
   if (S.models && S.models.all){ const M=S.models.all, w=M.terms.filter(t=>t.term.startsWith('Weather:')||t.term.startsWith('Year'));
-    chartCard(g,{title:'Adjusted rate ratios: quasi-Poisson regression of daily crashes', sub:`Weather class effects after controlling for weekday, month and year trend (n = ${fmt(M.n)} days, dispersion ${fmt(M.dispersion,2)}, pseudo-R² ${pct(M.pseudo_r2,1)}). Table view lists every term.`, legend:[{name:'Rate ratio (95% CI)',var:'--s1'}],
+    chartCard(g,{title:'Adjusted rate ratios: quasi-Poisson regression of daily crashes', help:'<p><b>What it shows.</b> The same rate ratios after a Poisson regression that also controls for weekday, month and a year trend, so the weather effect is not confounded by seasonality or traffic growth.</p><p><b>How to read.</b> Rate ratio with a 95% CI; the Chart view hides year/weekday/month terms, the Table view lists every term in the model.</p><p><b>What to look for.</b> Classes that stay above 1× after adjustment are the robust effects; ones that shrink to 1× were mostly explained by when they happened.</p>', sub:`Weather class effects after controlling for weekday, month and year trend (n = ${fmt(M.n)} days, dispersion ${fmt(M.dispersion,2)}, pseudo-R² ${pct(M.pseudo_r2,1)}). Table view lists every term.`, legend:[{name:'Rate ratio (95% CI)',var:'--s1'}],
       render:el=>ciChart(el,{rows:w.map(t=>({label:t.term.replace('Weather: ','').replace(' / black-ice risk',''), vals:[{v:t.rr,lo:t.lo,hi:t.hi,note:'p = '+fmtP(t.p)}]})), series:[{name:'Adjusted RR',var:'--s1'}], log:true, refLine:1, xFmt:v=>fmt(v,v<1?2:0)+'×'}),
       table:{columns:['Term','Coefficient','Rate ratio','95% CI','SE','z','p'], rows:M.terms.map(t=>[t.term,fmt(t.coef,3),fmt(t.rr,3),fmt(t.lo,3)+' to '+fmt(t.hi,3),fmt(t.se,3),fmt(t.z,2),sigSpan(t.p)]), numeric:[0,1,1,1,1,1,1]}});
     if (S.models.continuous){ const Cm=S.models.continuous, cw=Cm.terms.slice(-4);
-      chartCard(g,{title:'Continuous weather drivers: rate ratio per unit', sub:'Same controls; per inch of precipitation, snowfall and snow depth, per 10 °F of minimum temperature above 32 °F.', legend:[{name:'Rate ratio (95% CI)',var:'--s1'}],
+      chartCard(g,{title:'Continuous weather drivers: rate ratio per unit', help:'<p><b>What it shows.</b> Rate ratios per one more inch of precipitation, snowfall, snow on the ground, or per 10 °F above freezing — a sensitivity instead of a yes/no class.</p><p><b>How to read.</b> A rate ratio of 1.3 per inch of precipitation means crash rate rises 30% for each additional inch.</p><p><b>What to look for.</b> Does the effect scale smoothly with intensity (good support for a graduated speed limit) or only kick in at extremes.</p>', sub:'Same controls; per inch of precipitation, snowfall and snow depth, per 10 °F of minimum temperature above 32 °F.', legend:[{name:'Rate ratio (95% CI)',var:'--s1'}],
         render:el=>ciChart(el,{rows:cw.map(t=>({label:t.term.replace(', area mean','').replace(', station max',''), vals:[{v:t.rr,lo:t.lo,hi:t.hi,note:'p = '+fmtP(t.p)}]})), series:[{name:'RR per unit',var:'--s1'}], log:true, refLine:1, xFmt:v=>fmt(v,v<1?2:0)+'×'}),
         table:{columns:['Term','Rate ratio','95% CI','p'], rows:Cm.terms.map(t=>[t.term,fmt(t.rr,3),fmt(t.lo,3)+' to '+fmt(t.hi,3),sigSpan(t.p)]), numeric:[0,1,1,1]}}); } }
   // ---- speed by class
   if (S.speed_tests){ const E=S.speed_tests.E.rows, W=S.speed_tests.W.rows;
-    chartCard(g,{title:'Daily corridor mean speed by weather class: median and 10th to 90th percentile', sub:`Kruskal-Wallis p = ${fmtP(S.speed_tests.E.kruskal_p)} EB, ${fmtP(S.speed_tests.W.kruskal_p)} WB. Table view: Mann-Whitney p and Cliff's delta against dry days.`, legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+    chartCard(g,{title:'Daily corridor mean speed by weather class: median and 10th to 90th percentile', help:"<p><b>What it shows.</b> Daily mean corridor speed in each weather class — the median and the 10th-to-90th-percentile band.</p><p><b>How to read.</b> The Kruskal-Wallis p above tests whether the class medians differ at all; the Table view gives Mann-Whitney p and Cliff's delta of each class versus dry days.</p><p><b>What to look for.</b> Classes with meaningfully lower medians signal drivers who are not self-regulating; a flat profile means the VSL has to do the slowing.</p>", sub:`Kruskal-Wallis p = ${fmtP(S.speed_tests.E.kruskal_p)} EB, ${fmtP(S.speed_tests.W.kruskal_p)} WB. Table view: Mann-Whitney p and Cliff's delta against dry days.`, legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
       render:el=>ciChart(el,{rows:E.map(r=>({label:`${clsLab(r.cls)} (${r.days} d)`, vals:[{v:r.median,lo:r.p10,hi:r.p90,note:r.mw_p!=null?'vs dry p = '+fmtP(r.mw_p):''}, (()=>{const q=W.find(x=>x.cls===r.cls)||{}; return {v:q.median,lo:q.p10,hi:q.p90,note:q.mw_p!=null?'vs dry p = '+fmtP(q.mw_p):''};})()]})), series:[{name:'EB',var:'--s1'},{name:'WB',var:'--s2'}], xFmt:v=>fmt(v,0)+' mph'}),
       table:{columns:['Class','Days','EB median','EB Δ vs dry','EB Mann-Whitney p','EB Cliff δ','EB Welch p','WB median','WB Δ vs dry','WB Mann-Whitney p','WB Cliff δ'], rows:E.map(r=>{ const q=W.find(x=>x.cls===r.cls)||{}; return [clsLab(r.cls),r.days,fmt(r.median,1),r.diff_median!=null?fmt(r.diff_median,1):'–',sigSpan(r.mw_p),fmt(r.cliffs_delta,2),sigSpan(r.welch_p),fmt(q.median,1),q.diff_median!=null?fmt(q.diff_median,1):'–',sigSpan(q.mw_p),fmt(q.cliffs_delta,2)]; }), numeric:[0,1,1,1,1,1,1,1,1,1,1]}});
     const HE=S.speed_tests.E.slowdown_rows, HW=S.speed_tests.W.slowdown_rows;
-    chartCard(g,{title:'Slowdown exposure by weather class: statistical tests', sub:'Mean hours per day with any segment below 35 mph and the share of days with any slowdown, tested against dry days.',
+    chartCard(g,{title:'Slowdown exposure by weather class: statistical tests', help:'<p><b>What it shows.</b> Mean hours per day with any segment below 35 mph (bars) and the share of days with any slowdown — both compared to dry days.</p><p><b>How to read.</b> The headline bars are the exposure to queues; the Table view lists the significance test of that difference and of the share of days with any episode.</p><p><b>What to look for.</b> Classes where both the hours and the share of days are statistically higher than dry: those are the slowdown-driving conditions a VSL should preempt.</p>', sub:'Mean hours per day with any segment below 35 mph and the share of days with any slowdown, tested against dry days.',
       render:el=>barChart(el,{categories:HE.map(r=>CLS_AXIS[r.cls]), yFmt:v=>fmt(v,2)+' h', series:[{name:'EB',var:'--s1',values:HE.map(r=>r.mean_h)},{name:'WB',var:'--s2',values:HE.map(r=>(HW.find(x=>x.cls===r.cls)||{}).mean_h)}]}), legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
       table:{columns:['Class','Days','EB mean h < 35','EB ratio vs dry','EB Mann-Whitney p','EB % days any','EB proportion p','WB mean h < 35','WB ratio vs dry','WB Mann-Whitney p','WB % days any','WB proportion p'], rows:HE.map(r=>{ const q=HW.find(x=>x.cls===r.cls)||{}; return [clsLab(r.cls),r.days,fmt(r.mean_h,2),fmt(r.ratio_mean_h,2),sigSpan(r.mw_p),pct(r.p_days_any),sigSpan(r.prop_p),fmt(q.mean_h,2),fmt(q.ratio_mean_h,2),sigSpan(q.mw_p),pct(q.p_days_any),sigSpan(q.prop_p)]; }), numeric:[0,1,1,1,1,1,1,1,1,1,1,1]}}); }
   // ---- dose response
   if (S.dose){ const D=S.dose;
-    const doseCard=(key,title)=>{ const R=D[key].rows; chartCard(g,{title, sub:`Crashes per 100 days with exact Poisson 95% intervals; ${D[key].var.toLowerCase()}.`, legend:[{name:'Crashes per 100 days',var:'--s1'}],
+    const doseCard=(key,title)=>{ const R=D[key].rows; chartCard(g,{title, help:'<p><b>What it shows.</b> Crashes per 100 days as the weather driver (precipitation, snow on ground, minimum temperature) steps through binned levels.</p><p><b>How to read.</b> Error bars are exact Poisson 95% intervals. Non-overlapping bars indicate the bins differ significantly.</p><p><b>What to look for.</b> A smooth rise would support a dose-response VSL rule; a flat profile across most bins with a spike at the extreme means a step rule is better.</p>', sub:`Crashes per 100 days with exact Poisson 95% intervals; ${D[key].var.toLowerCase()}.`, legend:[{name:'Crashes per 100 days',var:'--s1'}],
       render:el=>ciChart(el,{rows:R.map(r=>({label:`${r.bin} (${r.days} d)`, vals:[{v:r.rate_per_100d,lo:r.rate_lo,hi:r.rate_hi,note:r.crashes+' crashes'}]})), series:[{name:'Rate / 100 d',var:'--s1'}], xFmt:v=>fmt(v,0), xMin:0}),
       table:{columns:['Bin','Days','Crashes','Injury','Truck','Rate / 100 d','95% CI','EB speed','WB speed','EB h < 35','WB h < 35','Episodes / day'], rows:R.map(r=>[r.bin,r.days,r.crashes,r.injury,r.truck,fmt(r.rate_per_100d,1),fmt(r.rate_lo,1)+' to '+fmt(r.rate_hi,1),fmt(r.speed_E,1),fmt(r.speed_W,1),fmt(r.h35_E,2),fmt(r.h35_W,2),fmt(r.ev_per_day,2)]), numeric:[0,1,1,1,1,1,1,1,1,1,1,1]}}); };
     doseCard('precip','Crash rate by daily precipitation'); doseCard('snwd','Crash rate by snow on the ground'); doseCard('tmin','Crash rate by minimum temperature'); }
   // ---- correlation matrix
   if (S.corr && S.corr.keys.length){ const Cm=S.corr; const shortL=Cm.labels.map(l=>l.replace(' (area mean, in)','').replace(' (station max, in)',' max').replace(' / day','').replace('pct ','').replace('travel time','TT'));
-    chartCard(g,{title:'Spearman rank correlation matrix, daily panel', sub:`${fmt(Cm.n_days)} days. Blue = positive, orange = negative; hover for r and p. Table view shows r with Pearson r in brackets.`, full:true,
+    chartCard(g,{title:'Spearman rank correlation matrix, daily panel', help:'<p><b>What it shows.</b> Spearman rank correlation between every pair of daily variables (weather, speed, slowdown hours, travel-time percentiles, crash counts).</p><p><b>How to read.</b> Blue = positive correlation, orange = negative. Darker = stronger. Hover for the numeric r and p. The Table view shows r with Pearson r in brackets.</p><p><b>What to look for.</b> Weather variables that correlate with crash counts AND with low speed hours are the ones a weather-responsive VSL can leverage.</p>', sub:`${fmt(Cm.n_days)} days. Blue = positive, orange = negative; hover for r and p. Table view shows r with Pearson r in brackets.`, full:true,
       render:el=>corrMatrix(el,{labels:Cm.labels, shortLabels:shortL, values:Cm.spearman, pvals:Cm.spearman_p}),
       table:{columns:['Variable',...shortL], rows:Cm.labels.map((l,i)=>[l,...Cm.spearman[i].map((r,j)=>i===j?'–':(r==null?'–':fmt(r,2)+' ['+fmt(Cm.pearson[i][j],2)+']'+(Cm.spearman_p[i][j]<0.05?' *':'')))])}}); }
   root.append(g);
   // ---- crash vs delay + lags + monthly tables
   const g3=h('div',{class:'grid g3',style:'margin-top:14px'});
   if (S.crash_vs_delay){ const rows=['E','W'].map(d=>{ const r=S.crash_vs_delay[d]; return [d==='E'?'Eastbound':'Westbound', r.crash_days+' / '+r.no_crash_days, fmt(r.spearman_r,3), sigSpan(r.spearman_p), fmt(r.h35_crash_days,2)+' vs '+fmt(r.h35_no_crash_days,2), sigSpan(r.h35_mw_p), pct(r.p_episode_crash_days)+' vs '+pct(r.p_episode_no_crash_days), sigSpan(r.p_episode_chi2_p), fmt(r.speed_r,3), sigSpan(r.speed_p)]; });
-    g3.append(h('div',{class:'card'}, h('h3',{},'Crash days versus delay'), buildTable({columns:['Dir','Crash / other days','r crashes × h < 35','p','h < 35: crash vs other','Mann-Whitney p','% days with episode','χ² p','r crashes × mean speed','p'], rows, numeric:[0,1,1,1,1,1,1,1,1,1]}))); }
-  if (S.lags){ g3.append(h('div',{class:'card'}, h('h3',{},'Lagged correlations: weather on day t−k versus crashes on day t'), h('p',{class:'muted'},'Spearman r. A lag-1 or lag-2 effect would indicate carry-over (ice, snow cover, debris); none is present beyond snow depth, which persists by definition.'), buildTable({columns:['Driver','Lag (days)','r','p','n'], rows:S.lags.map(r=>[r.driver,r.lag_days,fmt(r.r,3),sigSpan(r.p),fmt(r.n)]), numeric:[0,1,1,1,1]}))); }
-  if (S.monthly){ g3.append(h('div',{class:'card'}, h('h3',{},'Monthly aggregates (n = '+fmt((S.monthly.rows[0]||{}).n_months)+' months)'), h('p',{class:'muted'},'Crashes per 30 days against monthly weather and traffic totals. Pearson for linear association, Spearman for rank.'), buildTable({columns:['Driver','Pearson r','p','Spearman r','p'], rows:S.monthly.rows.map(r=>[r.driver,fmt(r.pearson_r,3),sigSpan(r.pearson_p),fmt(r.spearman_r,3),sigSpan(r.spearman_p)]), numeric:[0,1,1,1,1]}))); }
+    g3.append(h('div',{class:'card'}, h('div',{style:'display:flex;align-items:center;gap:8px'}, h('h3',{style:'margin:0;flex:1'},'Crash days versus delay'), helpIcon('<p><b>What it shows.</b> Tests of whether crash days see more segment hours below 35 mph than crash-free days, and whether the share of days with any slowdown differs.</p><p><b>How to read.</b> r with Mann-Whitney / χ² p; * marks p<0.05.</p>')), buildTable({columns:['Dir','Crash / other days','r crashes × h < 35','p','h < 35: crash vs other','Mann-Whitney p','% days with episode','χ² p','r crashes × mean speed','p'], rows, numeric:[0,1,1,1,1,1,1,1,1,1]}))); }
+  if (S.lags){ g3.append(h('div',{class:'card'}, h('div',{style:'display:flex;align-items:center;gap:8px'}, h('h3',{style:'margin:0;flex:1'},'Lagged correlations: weather on day t−k versus crashes on day t'), helpIcon("<p><b>What it shows.</b> Spearman correlation of each weather driver on day <em>t−k</em> against crash count on day <em>t</em>.</p><p><b>How to read.</b> A positive lag-1 or lag-2 effect would indicate carry-over (ice, snow cover, debris). A near-zero r means today's crashes depend on today's weather, not yesterday's.</p>")), h('p',{class:'muted'},'Spearman r. A lag-1 or lag-2 effect would indicate carry-over (ice, snow cover, debris); none is present beyond snow depth, which persists by definition.'), buildTable({columns:['Driver','Lag (days)','r','p','n'], rows:S.lags.map(r=>[r.driver,r.lag_days,fmt(r.r,3),sigSpan(r.p),fmt(r.n)]), numeric:[0,1,1,1,1]}))); }
+  if (S.monthly){ g3.append(h('div',{class:'card'}, h('div',{style:'display:flex;align-items:center;gap:8px'}, h('h3',{style:'margin:0;flex:1'},'Monthly aggregates (n = '+fmt((S.monthly.rows[0]||{}).n_months)+' months)'), helpIcon('<p><b>What it shows.</b> Correlation of monthly crash rate against monthly weather and traffic totals.</p><p><b>How to read.</b> Pearson for linear association, Spearman for rank. * marks p<0.05.</p>')), h('p',{class:'muted'},'Crashes per 30 days against monthly weather and traffic totals. Pearson for linear association, Spearman for rank.'), buildTable({columns:['Driver','Pearson r','p','Spearman r','p'], rows:S.monthly.rows.map(r=>[r.driver,fmt(r.pearson_r,3),sigSpan(r.pearson_p),fmt(r.spearman_r,3),sigSpan(r.spearman_p)]), numeric:[0,1,1,1,1]}))); }
   root.append(g3);
   if (S.monthly && S.monthly.series){ const ser=S.monthly.series; const g4=h('div',{class:'grid g1',style:'margin-top:14px'});
-    chartCard(g4,{title:'Monthly crashes per 30 days, adverse days and slowdown episodes', sub:'Three series on one time axis, each indexed to its own 60-month mean (1.0 = average month) so they share a scale.', legend:[{name:'Crashes',var:'--s1'},{name:'Adverse days',var:'--s2'},{name:'Slowdown episodes',var:'--s3'}],
+    chartCard(g4,{title:'Monthly crashes per 30 days, adverse days and slowdown episodes', help:'<p><b>What it shows.</b> Monthly values of crashes, adverse days and slowdown episodes, each indexed to its own 60-month mean (1.0 = the average month).</p><p><b>How to read.</b> All three series share a 0-to-few scale so you can see which rise together.</p><p><b>What to look for.</b> Months where all three climb together are the ones that justify the system year-over-year, not just one cold week.</p>', sub:'Three series on one time axis, each indexed to its own 60-month mean (1.0 = average month) so they share a scale.', legend:[{name:'Crashes',var:'--s1'},{name:'Adverse days',var:'--s2'},{name:'Slowdown episodes',var:'--s3'}],
       render:el=>{ const idx=k=>{ const m=ser.reduce((a,r)=>a+(r[k]||0),0)/ser.length; return ser.map(r=>m?+( (r[k]||0)/m ).toFixed(3):null); }; lineChart(el,{x:ser.map(r=>r.ym), xTicks:ser.map((r,i)=>r.ym.endsWith('-01')?i:-1).filter(i=>i>=0), xLabel:(i,full)=>full?ser[i].ym:ser[i].ym.slice(0,4), yFmt:v=>fmt(v,1)+'×', refLines:[{y:1,label:'60-month mean'}], series:[{name:'Crashes',var:'--s1',values:idx('crash_rate')},{name:'Adverse days',var:'--s2',values:idx('adverse_days')},{name:'Episodes',var:'--s3',values:idx('episodes')}]}); },
       table:{columns:['Month','Crashes','Crashes / 30 d','Adverse days','Snow (in)','Precip (in)','Episodes','Hours < 35','Mean speed'], rows:ser.map(r=>[r.ym,r.crashes,fmt(r.crash_rate,2),r.adverse_days,fmt(r.snow,1),fmt(r.prcp,2),r.episodes,fmt(r.h35,1),fmt(r.speed,1)]), numeric:[0,1,1,1,1,1,1,1,1]}});
     root.append(g4); }
@@ -1378,6 +1430,17 @@ function buildStats(root){
 (function(){
   const root=$('#panel-corr');
   root.append(h('h2',{},'Validating the user needs with data'), h('p',{}, 'The core argument of the concept of operations is that a measurable share of crashes and delay on I-78 happens under conditions a VSL can detect in advance, and that drivers are not slowing enough on their own. Each need below is paired with the test that proves or disproves it and the result so far. The statistical tests that follow (rate ratios with confidence intervals, Poisson regression, rank tests, correlation matrix) are computed in scripts/stats_tests.py on a daily panel of ' + (S?fmt(S.panel_days):'–') + ' days.'));
+  // Overall conclusions summary at the top: a plain-English readout so a non-stats reader can skim the tab.
+  root.append(h('div',{class:'card',style:'background:var(--accent-wash,rgba(42,120,214,.08));border-left:4px solid var(--accent);margin-top:14px'},
+    h('div',{style:'display:flex;align-items:center;gap:8px'}, h('h3',{style:'margin:0;flex:1'},'Overall conclusions from the statistics'), helpIcon('<p><b>How this box is built.</b> It summarises the statistical tests on this tab in plain language. Click the ⓘ next to each chart below for how to read that specific test.</p>')),
+    h('ul',{class:'tight',style:'margin-top:8px'},
+      h('li',{}, h('b',{},'Weather effect is real but modest and uneven. '), 'Heavy rain and light snow carry 40-60% higher crash rates than dry days, significant after controlling for weekday, month and year trend. Wet-pavement and freezing-precip days are not significantly worse once the trend is removed.'),
+      h('li',{}, h('b',{},'Drivers do not self-regulate. '), 'Corridor mean speed on wet, rainy and light-snow days is within 1-3 mph of dry-day speed. Only major-snow days show a real speed drop. That is the core justification for a regulatory limit rather than advisory messaging.'),
+      h('li',{}, h('b',{},'Delay is episodic, not recurring. '), 'Weekday mean speeds stay 65-69 mph in every hour; the planning-time index averages near 1.15. The travel-time case rides on about 500 slowdown episodes per year, not on peak-period congestion.'),
+      h('li',{}, h('b',{},'Crash days really do see more queue time. '), 'Days with any crash have substantially more hours with a segment below 35 mph than crash-free days, in both directions. The back-of-queue protection use case is supported.'),
+      h('li',{}, h('b',{},'Day-to-day correlations are weak; monthly patterns are strong. '), 'Snow months and heavy-precipitation months cluster crashes together even where daily r is small, so monthly aggregates are the right scale for the system-level benefit estimate.'),
+      h('li',{}, h('b',{},'Caveats. '), 'Weather classes are coarse (a day flagged as wet may only have been wet for two hours), exposure is in days not vehicle-miles, and multiple tests are run without a multiple-comparison correction. See the Method tab for the full methods and limits.'))));
+
   const sbc=(d,k)=>(X.speed_by_cls||[]).find(r=>r.dir===d&&r.cls===k)||{};
   const rr=k=>{ if(!hasCR||!hasC) return null; const n=CR.by_cls[k].n, d=C.period.days_in_class[CLS[k].key]; const n0=CR.by_cls[0].n, d0=C.period.days_in_class.dry; return (n/d)/(n0/d0); };
   const needs=[
@@ -1389,13 +1452,13 @@ function buildStats(root){
     ['N6','Safer work zones','Work-zone crash share; lane-closure hours', hasCR?`${fmt(ST.workzone_n)} crashes coded in a construction / maintenance zone (${pct(ST.workzone_n/ST.n)}), concentrated 2022-2024. Closure hours still needed for a rate.`:'pending','supported (rate pending)'],
     ['N7','Manage truck speed on the grades','Truck share; downgrade crashes by direction', hasCR?`${pct(ST.truck_share)} truck involvement; ${fmt((CR.grade_dir.find(r=>r.grade==='Down Hill'&&r.dir==='W')||{}).n)} WB downhill crashes vs ${fmt((CR.grade_dir.find(r=>r.grade==='Down Hill'&&r.dir==='E')||{}).n)} EB.`:'pending','supported'],
   ];
-  root.append(h('div',{class:'card'}, h('h3',{},'User needs, validation tests and results'), buildTable({columns:['#','Need','Validation test','Result so far','Status'], rows:needs})));
+  root.append(h('div',{class:'card'}, h('div',{style:'display:flex;align-items:center;gap:8px'}, h('h3',{style:'margin:0;flex:1'},'User needs, validation tests and results'), helpIcon('<p><b>What it shows.</b> The user-needs validation matrix: each need from the concept of operations, the test, the current result, and the status.</p><p><b>How to read.</b> Statuses: <em>supported</em> (data confirms the need), <em>partly supported</em>, <em>pending</em>, <em>not supported</em>. "Supported" is the case to make in the ConOps.</p>')), buildTable({columns:['#','Need','Validation test','Result so far','Status'], rows:needs})));
   buildStats(root);
 
   // relative risk table (auto-filled)
   if (hasC){
     const card=h('div',{class:'card',style:'margin-top:14px'});
-    card.append(h('h3',{},'Crash rate by weather class of the day (relative risk)'), h('p',{class:'muted'},'Denominators are days in each class from the climate pull; numerators are mainline crashes on those days (auto-filled from the crash extract, editable). Relative risk = crashes per day in the class ÷ crashes per dry day. Daily classes are coarse: a "wet day" may be wet for two hours, which dilutes the wet-day rate; the surface-coded crash counts in Tab 1 are the sharper measure.'));
+    card.append(h('div',{style:'display:flex;align-items:center;gap:8px'}, h('h3',{style:'margin:0;flex:1'},'Crash rate by weather class of the day (relative risk)'), helpIcon('<p><b>What it shows.</b> The relative-risk table: days in each weather class, crashes on those days, crashes per 100 days, relative risk vs dry.</p><p><b>How to read.</b> Numbers are editable — override the count fields and the ratios recompute. This is the daily-class view; the per-crash surface-coded view on tab 1 is sharper because a "wet day" may only be wet for two hours.</p>')), h('p',{class:'muted'},'Denominators are days in each class from the climate pull; numerators are mainline crashes on those days (auto-filled from the crash extract, editable). Relative risk = crashes per day in the class ÷ crashes per dry day. Daily classes are coarse: a "wet day" may be wet for two hours, which dilutes the wet-day rate; the surface-coded crash counts in Tab 1 are the sharper measure.'));
     const denom=CLS.map(c=>C.period.days_in_class[c.key]);
     const tbody=h('tbody'); const inputs=[];
     CLS.forEach((c,i)=>{ const inp=h('input',{type:'number',min:0,step:1,class:'inline-in',value:hasCR?CR.by_cls[i].n:''}); inputs.push(inp);
@@ -1408,24 +1471,24 @@ function buildStats(root){
 
   const g=h('div',{class:'grid g2',style:'margin-top:14px'});
   if (hasIX && hasC && X.speed_by_cls){
-    chartCard(g,{title:'Corridor mean speed by weather class of the day', sub:'Daily mean of the 5-min corridor speed; the drop appears only for major snow', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+    chartCard(g,{title:'Corridor mean speed by weather class of the day', help:'<p><b>What it shows.</b> The corridor-wide 5-minute mean speed averaged over each day, split by the weather class of that day.</p><p><b>How to read.</b> Taller bars = faster day. If every bar is near the free-flow mark, drivers are not self-regulating in bad weather.</p><p><b>What to look for.</b> A big drop only in the most severe class means the system today reacts late — a VSL could act earlier.</p>', sub:'Daily mean of the 5-min corridor speed; the drop appears only for major snow', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
       render:el=>barChart(el,{categories:CLS_AXIS, yFmt:v=>fmt(v)+' mph', series:[{name:'EB',var:'--s1',values:CLS.map(c=>sbc('E',c.id).speed)},{name:'WB',var:'--s2',values:CLS.map(c=>sbc('W',c.id).speed)}]}),
       table:{columns:['Class','Days','EB speed','EB TT 95th','EB h any<35','EB % days with slowdown','WB speed','WB TT 95th','WB h any<35','WB % days with slowdown'], rows:CLS.map(c=>{ const e=sbc('E',c.id), w=sbc('W',c.id); return [CLS_SHORT[c.id],e.days,e.speed,e.tt95,e.h_any_lt35,pct(e.p_days_with_slowdown),w.speed,w.tt95,w.h_any_lt35,pct(w.p_days_with_slowdown)]; }), numeric:[0,1,1,1,1,1,1,1,1,1]}});
-    chartCard(g,{title:'Hours per day with any segment below 35 mph, by weather class', sub:'Slowdown exposure rises with heavy rain and major snow; freezing-precip days are quieter (many are light events)', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+    chartCard(g,{title:'Hours per day with any segment below 35 mph, by weather class', help:'<p><b>What it shows.</b> Mean hours per day the corridor has any segment below 35 mph — the queue / incident exposure — split by the weather class.</p><p><b>How to read.</b> Taller bars = more queueing time that day on average.</p><p><b>What to look for.</b> Classes where hours spike are where a back-of-queue protection use case is strongest.</p>', sub:'Slowdown exposure rises with heavy rain and major snow; freezing-precip days are quieter (many are light events)', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
       render:el=>barChart(el,{categories:CLS_AXIS, yFmt:v=>fmt(v,1)+' h', series:[{name:'EB',var:'--s1',values:CLS.map(c=>sbc('E',c.id).h_any_lt35)},{name:'WB',var:'--s2',values:CLS.map(c=>sbc('W',c.id).h_any_lt35)}]})});
   }
   if (X.delay_by_crash_day){
-    chartCard(g,{title:'Slowdown hours on crash days versus crash-free days', sub:'Hours per day with any segment below 35 mph; the incident scenario\'s delay signature', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
+    chartCard(g,{title:'Slowdown hours on crash days versus crash-free days', help:'<p><b>What it shows.</b> On days with 0, 1, or 2+ crashes, how many hours any segment sat below 35 mph.</p><p><b>How to read.</b> Each bar is the average of that day type. Higher = more queue time.</p><p><b>What to look for.</b> A big jump from 0-crash to 1+-crash days supports the incident scenario: crashes cause queues, which are the thing the VSL is protecting against.</p>', sub:'Hours per day with any segment below 35 mph; the incident scenario\'s delay signature', legend:[{name:'Eastbound',var:'--s1'},{name:'Westbound',var:'--s2'}],
       render:el=>{ const cats=['no crash','1 crash','2+ crashes']; barChart(el,{categories:cats, yFmt:v=>fmt(v,2)+' h', series:[{name:'EB',var:'--s1',values:cats.map(c=>(X.delay_by_crash_day.find(r=>r.dir==='E'&&r.crash_day===c)||{}).h_any_lt35)},{name:'WB',var:'--s2',values:cats.map(c=>(X.delay_by_crash_day.find(r=>r.dir==='W'&&r.crash_day===c)||{}).h_any_lt35)}]}); },
       table:{columns:['Dir','Day type','Days','Hours any seg < 35','TT 95th (min)','% days with slowdown'], rows:X.delay_by_crash_day.map(r=>[r.dir,r.crash_day,r.days,r.h_any_lt35,r.tt95,pct(r.p_days_with_slowdown)]), numeric:[0,0,1,1,1,1]}});
   }
   if (hasC){
-    chartCard(g,{title:'Adverse days by month and weekday', sub:'Adverse-weather days 2021-25; weekday cells overlap commuter and truck traffic',
+    chartCard(g,{title:'Adverse days by month and weekday', help:'<p><b>What it shows.</b> Adverse-weather day counts in each weekday × month cell over the 5-year extract.</p><p><b>How to read.</b> Darker = more adverse days. Winter months fill the top rows; weekday vs weekend differences are usually small.</p><p><b>What to look for.</b> Overlap with the commuter peak columns in the next chart to see the "worst case" cells.</p>', sub:'Adverse-weather days 2021-25; weekday cells overlap commuter and truck traffic',
       render:el=>heatmap(el,{rows:MONTHS, cols:DOW, values:C.dow_month, fmtV:v=>v+' adverse days'}),
       table:{columns:['Month',...DOW], rows:C.dow_month.map((r,i)=>[MONTHS[i],...r]), numeric:[0,1,1,1,1,1,1,1]}});
   }
   if (hasCR){
-    chartCard(g,{title:'Adverse-condition crashes by weekday and hour', sub:'When weather-related crashes happen; compare with the all-crash matrix in Tab 1',
+    chartCard(g,{title:'Adverse-condition crashes by weekday and hour', help:'<p><b>What it shows.</b> Adverse-condition crashes by day-of-week and hour-of-day.</p><p><b>How to read.</b> Darker cells = more adverse crashes at that weekday-hour. Compare with the all-crash matrix on tab 1 to see what weather adds.</p><p><b>What to look for.</b> Peaks in the weekday peak hours signal activation windows a VSL should be ready to fire.</p>', sub:'When weather-related crashes happen; compare with the all-crash matrix in Tab 1',
       render:el=>heatmap(el,{rows:DOW, cols:HOURS, values:CR.hour_dow_adv, colLabelEvery:2, fmtV:v=>v+' adverse crashes'}),
       table:{columns:['Day',...HOURS], rows:CR.hour_dow_adv.map((r,i)=>[DOW[i],...r])}});
   }
@@ -1754,25 +1817,10 @@ function buildCalculator(){
   const signs = signFolder ? signFolder.features.filter(f=>f.lat!=null) : [];
   if (!signs.length){ root.append(h('h2',{},'VSL Sign Evaluation'), h('p',{class:'note'},'No VSL sign features are loaded. Drop the KMZ in dashboard/data/KMZs/ and re-run scripts/parse_kmz.py then scripts/build_dashboard.py.')); return; }
 
-  // ---- Snap each sign to the corridor centerline to get its milepost and direction.
-  // Projects each sign's lat/lon onto every segment of COR.centerline, picks the closest, and interpolates the
-  // milepost using COR_CUM (cumulative along-corridor distance).
-  function projectToCorridor(lat, lon){
-    const pts=COR.centerline;
-    // approximate equirectangular distance (good enough for 15 miles of corridor)
-    const latm = 111.0, lonm = 111.0*Math.cos(lat*Math.PI/180);
-    let best={d2:Infinity, mp:0, lat:pts[0][0], lon:pts[0][1]};
-    for(let i=1;i<pts.length;i++){
-      const ax=pts[i-1][1], ay=pts[i-1][0], bx=pts[i][1], by=pts[i][0];
-      const vx=(bx-ax)*lonm, vy=(by-ay)*latm; const wx=(lon-ax)*lonm, wy=(lat-ay)*latm;
-      const vv=vx*vx+vy*vy; let t = vv>0 ? (vx*wx+vy*wy)/vv : 0; t=Math.max(0,Math.min(1,t));
-      const px=ax+(bx-ax)*t, py=ay+(by-ay)*t;
-      const dx=(lon-px)*lonm, dy=(lat-py)*latm; const d2=dx*dx+dy*dy;
-      if(d2<best.d2){ const mp = COR_CUM[i-1] + (COR_CUM[i]-COR_CUM[i-1])*t; best={d2, mp, lat:py, lon:px}; }
-    }
-    best.distMi = Math.sqrt(best.d2) / 1.60934;
-    return best;
-  }
+  // Snap each sign to the I-78 alignment and get its real NJDOT milepost (via latLngToMp, backed by
+  // dashboard/data/i78_mileposts.json when available; falls back to the proportional-distance corridor
+  // centerline when the fetch hasn't been run).
+  const projectToCorridor = (lat, lon) => { const r=latLngToMp(lat, lon); return {mp:r.mp, distMi:r.snapMi}; };
 
   // Parse direction (EB/WB) from sign name
   function dirOf(name){ const u=(name||'').toUpperCase(); if(/\bWB\b|\bW\b/.test(u)) return 'W'; if(/\bEB\b|\bE\b/.test(u)) return 'E'; return null; }
@@ -1894,25 +1942,66 @@ function buildCalculator(){
   const body=h('div',{}); tbl.append(body); render();
   root.append(tbl);
 
-  // Score bar chart by sign
+  // Score breakdown chart: stacked horizontal bars, one segment per weighted sub-score (crashes, injury,
+  // adverse weather, truck, work zone, possible secondary, INRIX slowdown episodes). Each segment's length
+  // is the weighted and normalized contribution to the composite score, so the stacked total equals the
+  // 0-100 composite shown next to the bar. Hovering a segment names the component and its value.
   const chartHost = h('div',{class:'card',style:'margin-bottom:14px'});
-  chartHost.append(h('h3',{},'Composite score, sorted highest first'), h('p',{class:'muted'},'Longer bars indicate locations where the scored conditions pile up (crashes, injuries, slowdowns, adverse weather, trucks, work zones, possible secondaries).'));
-  const chartEl = h('div',{class:'chart',style:'padding:6px 4px 4px'});
+  chartHost.append(h('div',{style:'display:flex;align-items:center;gap:8px'}, h('h3',{style:'margin:0;flex:1'},'Composite score, broken down by what is driving it'), helpIcon('<p><b>What it shows.</b> Each bar is a VSL sign location. The coloured segments add up to its 0-100 composite score, so you can see which component (injury crashes, adverse weather, slowdowns, etc.) is driving its ranking.</p><p><b>How to read.</b> Longer total bar = higher score. Wide red segment = driven by injury crashes; wide orange = driven by adverse-weather crashes; wide green = INRIX slowdowns, etc. Hover a segment for its underlying count.</p>')));
+  chartHost.append(h('p',{class:'muted'},'Each segment length = weight × (count / corridor max), normalised so the segments add to the sign\'s 0-100 composite.'));
+  // Component legend
+  const compLegend = h('div',{class:'legend',style:'margin:4px 0 8px'});
+  const COMPS = [
+    {k:'n',           label:'Crashes',          'var':'--s1'},
+    {k:'inj',         label:'Injury',           'var':'--s8'},
+    {k:'adv',         label:'Adverse weather',  'var':'--s2'},
+    {k:'truck',       label:'Truck',            'var':'--s4'},
+    {k:'wz',          label:'Work zone',        'var':'--s5'},
+    {k:'sec',         label:'Possible secondary','var':'--s7'},
+    {k:'tmcEpisodes', label:'Slowdown episodes','var':'--s3'}];
+  COMPS.forEach(c=>compLegend.append(h('span',{}, h('i',{style:'background:'+css(c.var)}), c.label)));
+  chartHost.append(compLegend);
+  const chartEl = h('div',{class:'chart',style:'padding:6px 4px 4px;position:relative'});
   chartHost.append(chartEl); root.append(chartHost);
   {
     const sorted = rows.slice().sort((a,b)=>b.score-a.score);
-    const H = 24*sorted.length + 24;
-    const W = 1000, LBL = 220;
-    const svg = s('svg',{viewBox:`0 0 ${W} ${H}`, preserveAspectRatio:'none', style:'width:100%;height:auto;max-height:'+H+'px'});
+    // Weights match the ones used to compute the composite above (W / WS factor); recompute per-component contributions.
+    const compContrib = r => COMPS.map(c => ({k:c.k, label:c.label, varc:c.var, value:r[c.k]||0, pts: 100 * W[c.k] * (r[c.k]||0) / mx(c.k) / WS}));
+    const H = 26*sorted.length + 24;
+    const W_svg = 1000, LBL = 230;
+    const barMax = W_svg - LBL - 60;
+    // Scale so the top bar fits: the longest total is Math.max(...sorted.map(r=>r.score))
     const maxScore = Math.max(1, ...sorted.map(r=>r.score));
+    const xScale = barMax / maxScore;
+    const svg = s('svg',{viewBox:`0 0 ${W_svg} ${H}`, preserveAspectRatio:'none', style:'width:100%;height:auto;max-height:'+H+'px'});
+    // Axis at bottom: 0, 25, 50, 75, 100
+    for (const v of [0, 25, 50, 75, 100]){
+      const x = LBL + v*xScale; if (x > LBL+barMax+1) continue;
+      svg.append(s('line',{x1:x, y1:12, x2:x, y2:H-6, stroke:css('--grid'), 'stroke-width':1}));
+    }
+    // Tooltip
+    const tip = h('div',{class:'tip',style:'font-size:11px;padding:5px 8px'}); chartEl.append(tip);
     sorted.forEach((r,i)=>{
-      const y=12+i*24;
-      svg.append(s('text',{x:LBL-8, y:y+9, 'text-anchor':'end', 'font-size':'11.5', fill:css('--ink'), 'font-weight':'600'}, r.name));
-      svg.append(s('text',{x:LBL-8-110, y:y+9, 'text-anchor':'end', 'font-size':'11', fill:(r.dir==='E'?css('--s1'):r.dir==='W'?css('--s2'):css('--muted'))}, (r.dir||'–')+'  MP '+r.mp.toFixed(1)));
-      const bw = (W-LBL-60)*r.score/maxScore;
-      svg.append(s('rect',{x:LBL, y:y-6, width:bw, height:14, fill:css('--s2'), rx:3}));
-      svg.append(s('text',{x:LBL+bw+6, y:y+5, 'font-size':'11.5', fill:css('--ink')}, String(r.score)));
+      const y=12+i*26;
+      svg.append(s('text',{x:LBL-8, y:y+10, 'text-anchor':'end', 'font-size':'11.5', fill:css('--ink'), 'font-weight':'600'}, r.name));
+      svg.append(s('text',{x:LBL-8-110, y:y+10, 'text-anchor':'end', 'font-size':'11', fill:(r.dir==='E'?css('--s1'):r.dir==='W'?css('--s2'):css('--muted'))}, (r.dir||'–')+'  MP '+r.mp.toFixed(1)));
+      // Stacked segments
+      let xoff = LBL;
+      compContrib(r).forEach(c=>{
+        const w = c.pts * xScale;
+        if (w < 0.1) return;
+        const rect = s('rect',{x:xoff, y:y-4, width:w, height:16, fill:css(c.varc), 'stroke':css('--surface'),'stroke-width':1.5});
+        rect.addEventListener('mousemove', ev=>{ const rb=svg.getBoundingClientRect(); tip.style.display='block'; tip.innerHTML=`<b>${r.name}</b> · ${c.label}<br>Count: ${fmt(c.value)} · Points: ${c.pts.toFixed(1)} of ${r.score}`; tip.style.left=(ev.clientX-rb.left+10)+'px'; tip.style.top=(ev.clientY-rb.top-30)+'px'; });
+        rect.addEventListener('mouseleave', ()=>{ tip.style.display='none'; });
+        svg.append(rect); xoff += w;
+      });
+      svg.append(s('text',{x:xoff+6, y:y+7, 'font-size':'11.5', fill:css('--ink'), 'font-weight':'700'}, String(r.score)));
     });
+    // Score axis labels below the chart
+    for (const v of [0, 25, 50, 75, 100]){
+      const x = LBL + v*xScale; if (x > LBL+barMax+1) continue;
+      svg.append(s('text',{x, y:H-10, 'text-anchor':'middle', 'font-size':'10.5', fill:css('--muted')}, String(v)));
+    }
     chartEl.append(svg);
   }
 

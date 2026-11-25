@@ -12,6 +12,7 @@ Working repository for the I-78 VSL concept-of-operations work in western New Je
 | `scripts/fetch_geometry.py` | Road-following geometry for the 24 INRIX segments from the public OSRM router (same method as the Santa Fe corridor map), cached per TMC in `dashboard/data/osrm_cache/` and written to `dashboard/data/tmc_geometry.json`. Run once, or again when TMCs change. |
 | `scripts/stats_tests.py` | Statistical tests on a daily panel (rate ratios with CIs, quasi-Poisson regression, Kruskal-Wallis / Mann-Whitney, Spearman matrix, dose-response bins, lags, monthly). Needs scipy. Called by the builder. |
 | `scripts/parse_kmz.py` | Parses the newest KMZ in `dashboard/data/KMZs/` (VSL and existing ITS asset locations) into `dashboard/data/vsl_assets.json`. The dashboard draws one toggleable layer per folder (VSL signs, zone limits, speed limits, ramp exits, transformers, CSS, DMS, fiber optic cable); each type uses a distinct SVG shape and color. Re-run when a new KMZ is dropped in. |
+| `scripts/fetch_mileposts.py` | Fetches the real NJDOT I-78 mileposts (SRIs `00000078__` and `00000078_W`) from the NJDOT Standard Route Id and Milepost ArcGIS service into `dashboard/data/i78_mileposts.json`. The dashboard then uses the real alignment to project VSL signs, crashes and INRIX segments to actual NJ mileposts instead of a distance-along-centerline approximation. Needs internet, no API key; run once. |
 | `dashboard/vendor/` | Leaflet 1.9.4 JS and CSS (BSD-2-Clause), inlined into the page at build time. |
 | `Input Data/Climate*` | NOAA GHCN-Daily pull, 17 stations within 8 mi of the corridor, 2021-2025. |
 | `Input Data/Crash_*` | NJDOT crash tables (Crash, Vehicle, Unit, Person, ...) for the I-78 municipalities. Only route-78 rows are used; no person-level fields reach the dashboard. |
@@ -26,6 +27,7 @@ Working repository for the I-78 VSL concept-of-operations work in western New Je
 
 ```
 python -I scripts/fetch_geometry.py     # once, or when the TMC list changes (needs internet)
+python -I scripts/fetch_mileposts.py    # once; pulls real NJDOT mileposts for I-78 (needs internet)
 python -I scripts/parse_kmz.py          # only when a new KMZ lands in dashboard/data/KMZs/
 python -I scripts/preprocess_inrix.py   # only when new INRIX files arrive
 python -I scripts/build_dashboard.py    # always

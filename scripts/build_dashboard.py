@@ -535,6 +535,18 @@ def cross_analysis(climate, inrix, crashes):
     return out
 
 
+def load_mileposts():
+    """Load dashboard/data/i78_mileposts.json (NJDOT real mileposts for I-78, from scripts/fetch_mileposts.py).
+    Falls back to an empty list so the dashboard still builds if the fetch hasn't been run yet."""
+    p = os.path.join(ROOT, "dashboard", "data", "i78_mileposts.json")
+    if not os.path.exists(p):
+        return {"status": "missing", "points": []}
+    with open(p, encoding="utf-8") as f:
+        data = json.load(f)
+    data["status"] = "loaded"
+    return data
+
+
 def load_vsl_assets():
     """Load dashboard/data/vsl_assets.json (written by scripts/parse_kmz.py from the KMZs in dashboard/data/KMZs/).
     Also attach a `icons` map {kind: base64 data URI} for any PNG in icons/sized/, so the dashboard can show the
@@ -568,9 +580,10 @@ def main():
     cross = cross_analysis(climate, inrix, crashes)
     climate.pop("_cls_by_date", None)
     assets = load_vsl_assets()
+    mileposts = load_mileposts()
     data = {
         "meta": {"generated": dt.datetime.now().strftime("%Y-%m-%d %H:%M"), "repo": "I78-VSL", "builder": "scripts/build_dashboard.py"},
-        "corridor": corridor, "climate": climate, "inrix": inrix, "crashes": crashes, "workzones": workzones, "cross": cross, "assets": assets,
+        "corridor": corridor, "climate": climate, "inrix": inrix, "crashes": crashes, "workzones": workzones, "cross": cross, "assets": assets, "mileposts": mileposts,
     }
 
     os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)
@@ -649,6 +662,7 @@ def build_inrix_map(data, corridor):
         "interchanges": [{"mp": x["mp"], "lat": x["lat"], "lon": x["lon"], "short": short(x["label"]), "label": x["label"]} for x in corridor["interchanges"]],
         "assets": data.get("assets", {}).get("folders", []),
         "asset_icons": data.get("assets", {}).get("icons", {}),
+        "mileposts": (data.get("mileposts") or {}).get("points", []),
     }
     with open(tpl, encoding="utf-8") as f:
         html = f.read()
